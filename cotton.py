@@ -42,7 +42,7 @@ dict_translations = {
         "25": "cultivable area (acre)",
         "26": "No. of cattle (cow and Buffalo)",
         "27": "source of drinking water",
-        "28": "Preferred selling point",
+        "28": "Preferred selling point (Aggregrator/Suminter/ APMC/ other Gin)",
         "29": "has space for harvested cotton storage (Y/N)",
         "30": "Receives any agro advisory (Y/N)",
         "31": "Received any training on best practices for organic cotton?",
@@ -78,7 +78,7 @@ dict_translations = {
         "61": "No. of workers require during sowing/acre",
         "62": "No. of workers require during havesting/acre",
         "63": "Harvesting time (1st, 2nd & 3rd picking) (month)",
-        "64": "weeding method used",
+        "64": "weeding method used (manual/mechanical)",
         "65": "weeding cost/acre",
         "66": "cost of mulching/acre",
         "67": "No. of Tillage practiced",
@@ -92,13 +92,13 @@ dict_translations = {
         "75": "Name of cover crop",
         "76": "Name of trap crop",
         "77": "Mulching used (Y/N)",
-        "78": "Type of mulching used",
+        "78": "Type of mulching used (Bio-plastic/ green/ dry)",
         "79": "What precautions used during storage",
         "80": "hired vehicle used for transportation of seed cotton (Y/N)",
         "81": "Transportation cost (Rs.)/Kg of seed cotton",
         "82": "Any quantity rejection due to contamination/impurities (Kg)",
         "83": "Price discovery mechanism",
-        "84": "Payment Transaction type",
+        "84": "Payment Transaction type (Cash/online)",
         "85": "Days of credit after sell",
         "86": "Availing any govt. scheme or subsidi benefits (Y/N)",
         "87": "Opted for crop insurance (Y/N)",
@@ -112,8 +112,8 @@ dict_translations = {
         "95": "Using any water tracking devices (Y/N)",
         "96": "capacity of pump (in HP)",
         "97": "Maintaining Buffer zone (Y/N)",
-        "98": "Utilization of crop residue",
-        "99": "Mode of payment to workers",
+        "98": "Utilization of crop residue (Fuel/cattle feed/biochar/ in-situ composting/burning)",
+        "99": "Mode of payment to workers (cash/ online)",
         "100": "Any wage difference for Men and Women workers (Y/N)",
         "101": "Using any labour register (Y/N)",
         "102": "any arrangement of safety-kit / first-aid for workers",
@@ -151,7 +151,7 @@ dict_translations = {
         "25": "कृषि योग्य क्षेत्र (एकड़)",
         "26": "मवेशियों की संख्या (गाय और भैंस)",
         "27": "पीने के पानी का स्रोत",
-        "28": "पसंदीदा बिक्री बिंदु",
+        "28": "पसंदीदा बिक्री बिंदु (एग्रीगेटर/सुमिंटर/एपीएमसी/अन्य जिन)",
         "29": "कटी हुई कपास भंडारण के लिए जगह है (हाँ/नहीं)",
         "30": "कोई कृषि सलाहकार प्राप्त होता है (हाँ/नहीं)",
         "31": "क्या जैविक कपास के लिए सर्वोत्तम प्रथाओं पर कोई प्रशिक्षण प्राप्त हुआ है?",
@@ -187,7 +187,7 @@ dict_translations = {
         "61": "बुवाई के दौरान आवश्यक श्रमिकों की संख्या/एकड़",
         "62": "कटाई के दौरान आवश्यक श्रमिकों की संख्या/एकड़",
         "63": "कटाई का समय (1st, 2nd और 3rd पिकिंग) (महीना)",
-        "64": "खरपतवार विधि का उपयोग किया गया",
+        "64": "खरपतवार विधि का उपयोग किया गया (मैनुअल/मैकेनिकल)",
         "65": "खरपतवार लागत/एकड़",
         "66": "पलवार लागत/एकड़",
         "67": "जुताई का अभ्यास किया गया",
@@ -201,13 +201,13 @@ dict_translations = {
         "75": "कवर फसल का नाम",
         "76": "ट्रैप फसल का नाम",
         "77": "पलवार का उपयोग किया गया (हाँ/नहीं)",
-        "78": "पलवार का प्रकार उपयोग किया गया",
+        "78": "पलवार का प्रकार उपयोग किया गया (जैव-प्लास्टिक/हरा/सूखा)",
         "79": "भंडारण के दौरान क्या सावधानियां बरती जाती हैं",
         "80": "बीज कपास के परिवहन के लिए किराए पर वाहन का उपयोग किया जाता है (हाँ/नहीं)",
         "81": "परिवहन लागत (रु.)/बीज कपास का किलो",
         "82": "संदूषण/अशुद्धियों के कारण कोई मात्रा अस्वीकृति (किलो)",
         "83": "मूल्य खोज तंत्र",
-        "84": "भुगतान लेनदेन प्रकार",
+        "84": "भुगतान लेनदेन प्रकार (नकद/ऑनलाइन)",
         "85": "बेचने के बाद क्रेडिट के दिन",
         "86": "किसी भी सरकारी योजना या सब्सिडी लाभ का लाभ उठाना (हाँ/नहीं)",
         "87": "फसल बीमा के लिए चुना गया (हाँ/नहीं)",
@@ -221,8 +221,8 @@ dict_translations = {
         "95": "क्या किसी जल ट्रैकिंग डिवाइस का उपयोग किया जा रहा है (हाँ/नहीं)",
         "96": "पंप की क्षमता (एचपी में)",
         "97": "बफर जोन बनाए रखना (हाँ/नहीं)",
-        "98": "फसल अवशेष का उपयोग",
-        "99": "श्रमिकों को भुगतान का तरीका",
+        "98": "फसल अवशेष का उपयोग (ईंधन/पशु चारा/बायोचार/इन-सीटू कंपोस्टिंग/जलाना)",
+        "99": "श्रमिकों को भुगतान का तरीका (नकद/ऑनलाइन)",
         "100": "पुरुष और महिला श्रमिकों के लिए कोई वेतन अंतर (हाँ/नहीं)",
         "101": "क्या किसी श्रम रजिस्टर का उपयोग किया जा रहा है (हाँ/नहीं)",
         "102": "श्रमिकों के लिए सुरक्षा-किट/प्राथमिक चिकित्सा की कोई व्यवस्था",
@@ -260,7 +260,7 @@ dict_translations = {
         "25": "लागवडीयोग्य क्षेत्र (एकर)",
         "26": "जनावरांची संख्या (गाय आणि म्हैस)",
         "27": "पिण्याच्या पाण्याचे स्रोत",
-        "28": "पसंतीचे विक्री केंद्र",
+        "28": "पसंतीचे विक्री केंद्र (एग्रीगेटर/सुमिंटर/एपीएमसी/इतर जिन)",
         "29": "कापणी केलेल्या कापसाच्या साठवणुकीसाठी जागा आहे (होय/नाही)",
         "30": "कोणताही कृषी सल्ला मिळतो (होय/नाही)",
         "31": "सेंद्रिय कापसासाठी सर्वोत्तम पद्धतींवर कोणतेही प्रशिक्षण मिळाले आहे का?",
@@ -296,7 +296,7 @@ dict_translations = {
         "61": "पेरणीच्या वेळी आवश्यक कामगरांची संख्या/एकर",
         "62": "कापणीच्या वेळी आवश्यक कामगरांची संख्या/एकर",
         "63": "कापणीची वेळ (1 ली, 2 री आणि 3 री निवड) (महिना)",
-        "64": "तण काढण्याची पद्धत वापरली",
+        "64": "तण काढण्याची पद्धत वापरली (हाताने/यांत्रिक)",
         "65": "तण काढण्याचा खर्च/एकर",
         "66": "आच्छादन खर्च/एकर",
         "67": "किती वेळा नांगरणी केली",
@@ -310,13 +310,13 @@ dict_translations = {
         "75": "आच्छादन पिकाचे नाव",
         "76": "सापळा पिकाचे नाव",
         "77": "आच्छादन वापरले (होय/नाही)",
-        "78": "वापरलेल्या आच्छादनाचा प्रकार",
+        "78": "वापरलेल्या आच्छादनाचा प्रकार (जैव-प्लास्टिक/हिरवा/कोरडा)",
         "79": "साठवणुकीदरम्यान कोणती खबरदारी घेतली जाते",
         "80": "बियाणे कापसाच्या वाहतुकीसाठी भाड्याचे वाहन वापरले (होय/नाही)",
         "81": "वाहतूक खर्च (रु.)/बियाणे कापसाचे किलो",
         "82": "प्रदूषण/अशुद्धतेमुळे कोणतीही मात्रा नाकारली (किलो)",
         "83": "किंमत शोधण्याची यंत्रणा",
-        "84": "पेमेंट व्यवहार प्रकार",
+        "84": "पेमेंट व्यवहार प्रकार (रोख/ऑनलाइन)",
         "85": "विक्रीनंतर क्रेडिटचे दिवस",
         "86": "कोणत्याही सरकारी योजनेचा किंवा अनुदानाचा लाभ घेणे (होय/नाही)",
         "87": "पीक विम्याची निवड केली (होय/नाही)",
@@ -330,8 +330,8 @@ dict_translations = {
         "95": "कोणतेही जल ट्रॅकिंग उपकरण वापरत आहात (होय/नाही)",
         "96": "पंपाची क्षमता (एचपी मध्ये)",
         "97": "बफर झोन राखणे (होय/नाही)",
-        "98": "फसल अवशेष का उपयोग",
-        "99": "कामगारांना देयकाची पद्धत",
+        "98": "पीक अवशेषांचा वापर (इंधन/जनावरांचे खाद्य/बायोचार/इन-सिटू कंपोस्टिंग/जाळणे)",
+        "99": "कामगारांना देयकाची पद्धत (रोख/ऑनलाइन)",
         "100": "पुरुष आणि महिला कामगारांसाठी कोणताही वेतन फरक (होय/नाही)",
         "101": "कोणतेही कामगार रजिस्टर वापरत आहात (होय/नाही)",
         "102": "कामगारांसाठी सुरक्षा-किट/प्राथमिक उपचारांची कोणतीही व्यवस्था",
@@ -339,7 +339,7 @@ dict_translations = {
         "104": "कामगारांसाठी शौचालयाची कोणतीही तरतूद",
         "105": "कुटुंबातील सदस्यांना (महिला) कृषी कार्यात सहभागी करणे",
         "106": "कोणतीही सामुदायिक जल संचयन रचना (होय/नाही)",
-        "107": "मातीतील ओलावा मीटरचा वापर (होय/नाही)",
+        "107": "मातीतील ओलावा मीटरचा वापर (होय/नाही)"
     },
     "Gujarati": {
         "1": "ખેડૂત ટ્રેસનેટ કોડ",
@@ -369,7 +369,7 @@ dict_translations = {
         "25": "ખેતીલાયક વિસ્તાર (એકર)",
         "26": "ઢોરની સંખ્યા (ગાય અને ભેંસ)",
         "27": "પીવાના પાણીનો સ્ત્રોત",
-        "28": "પસંદગીનું વેચાણ સ્થળ",
+        "28": "પસંદગીનું વેચાણ સ્થળ (એગ્રીગેટર/સુમિન્ટર/એપીએમસી/અન્ય જીન)",
         "29": "કાપણી કરેલા કપાસના સંગ્રહ માટે જગ્યા છે (હા/ના)",
         "30": "કોઈપણ કૃષિ સલાહ મળે છે (હા/ના)",
         "31": "શું ઓર્ગેનિક કપાસ માટે શ્રેષ્ઠ પ્રથાઓ પર કોઈ તાલીમ મળી છે?",
@@ -405,7 +405,7 @@ dict_translations = {
         "61": "વાવણી દરમિયાન જરૂરી કામદારોની સંખ્યા/એકર",
         "62": "કાપણી દરમિયાન જરૂરી કામદારોની સંખ્યા/એકર",
         "63": "કાપણીનો સમય (1 લી, 2 જી અને 3 જી પસંદગી) (મહિનો)",
-        "64": "નિંદામણ પદ્ધતિનો ઉપયોગ કર્યો",
+        "64": "નિંદામણ પદ્ધતિનો ઉપયોગ કર્યો (મેન્યુઅલ/મિકેનિકલ)",
         "65": "નિંદામણ ખર્ચ/એકર",
         "66": "મલ્ચિંગ ખર્ચ/એકર",
         "67": "કેટલી વખત ખેડાણ કરવામાં આવ્યું",
@@ -419,13 +419,13 @@ dict_translations = {
         "75": "કવર પાકનું નામ",
         "76": "ટ્રેપ પાકનું નામ",
         "77": "મલ્ચિંગ વપરાય છે (હા/ના)",
-        "78": "વપરાયેલા મલ્ચિંગનો પ્રકાર",
+        "78": "વપરાયેલા મલ્ચિંગનો પ્રકાર (બાયો-પ્લાસ્ટિક/લીલો/સૂકો)",
         "79": "સંગ્રહ દરમિયાન શું સાવચેતીઓ વપરાય છે",
         "80": "બીજ કપાસના પરિવહન માટે ભાડે લીધેલ વાહન વપરાય છે (હા/ના)",
         "81": "પરિવહન ખર્ચ (રૂ.)/બીજ કપાસનું કિલો",
         "82": "દૂષણ/અશુદ્ધિઓને કારણે કોઈપણ જથ્થો અસ્વીકાર (કિલો)",
         "83": "કિંમત શોધવાની પદ્ધતિ",
-        "84": "ચુકવણી વ્યવહાર પ્રકાર",
+        "84": "ચુકવણી વ્યવહાર પ્રકાર (રોકડ/ઓનલાઇન)",
         "85": "વેચાણ પછી ક્રેડિટના દિવસો",
         "86": "કોઈપણ સરકારી યોજના અથવા સબસિડી લાભો મેળવવા (હા/ના)",
         "87": "પાક વીમા માટે પસંદ કર્યું (હા/ના)",
@@ -439,8 +439,8 @@ dict_translations = {
         "95": "કોઈપણ જળ ટ્રેકિંગ ઉપકરણોનો ઉપયોગ કરી રહ્યા છો (હા/ના)",
         "96": "પંપની ક્ષમતા (એચપીમાં)",
         "97": "બફર ઝોન જાળવવું (હા/ના)",
-        "98": "ફસલ અવશેષોનો ઉપયોગ",
-        "99": "કામદારોને ચુકવણીની રીત",
+        "98": "પાકના અવશેષોનો ઉપયોગ (બળતણ/પશુ આહાર/બાયોચાર/ઇન-સિટુ કમ્પોસ્ટિંગ/સળગાવવું)",
+        "99": "કામદારોને ચુકવણીની રીત (રોકડ/ઓનલાઇન)",
         "100": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)",
         "101": "કોઈપણ મજૂર રજિસ્ટરનો ઉપયોગ કરી રહ્યા છો (હા/ના)",
         "102": "કામદારો માટે સલામતી-કીટ/પ્રાથમિક સારવારની કોઈપણ વ્યવસ્થા",
@@ -452,71 +452,27 @@ dict_translations = {
     },
 }
 
-# Dropdown options
-education_options = ["Below SSC", "SSC", "HSC", "Graduation", "Post Graduation"]
-district_options = ["Morbi", "Surendranagar", "Kutch", "Akola"]
-state_options = ["Gujarat", "Maharashtra"]
-certification_options = ["IC1", "IC2", "IC3", "Not certified"]
-irrigation_options = [
-    "Canal",
-    "Well",
-    "Borewell",
-    "River",
-    "Farm Pond",
-    "Community Pond",
-]
-cultivable_area_options = ["irrigated", "rainfed"]
-selling_point_options = ["Aggregrator/Suminter", "APMC", "Others"]
-agro_advisory_options = [
-    "No",
-    "KVK",
-    "Agri. University",
-    "Agri Department",
-    "NGOs",
-    "Private Company",
-    "Others",
-]
-fpo_options = [
-    "FPO",
-    "FPC",
-    "SHG",
-    "Agri. Department",
-    "NGOs",
-    "Private company",
-    "Other",
-]
-bio_input_options = [
-    "NSKE",
-    "Neem oil",
-    "Beaveria bassiana",
-    "Metarhizium Aenosoplae",
-    "Dashparni Ark",
-    "Verticilliam Leccani",
-    "Panch Parni ark",
-    "Agniastra",
-    "Brahmastra",
-    "Neemastra",
-    "Buttermilk",
-    "Onion, garlic paste",
-]
-bio_fertilizer_options = [
-    "FYM compost",
-    "vermicompost",
-    "Azatobacter",
-    "Phosphate solubilizing bacteria",
-    "Rhizobium",
-    "Azospirillium",
-    "Pseudomonas",
-    "Jeevamrut",
-    "Ghanjivamrut",
-    "Neem cake",
-    "Castor cake",
-    "Akada ark",
-]
-irrigation_method_options = [
-    "Drip irrigation",
-    "Sprinkler irrigation",
-    "Flood irrigation",
-    "other",
-]
-weeding_method_options = ["manual",
+# Define the questions using the keys from the dictionary
+questions = [str(i) for i in range(1, 108)]  # Create a list of strings from "1" to "107"
+
+# Get the translations for the selected language
+labels = dict_translations.get(language, dict_translations["English"])
+
+responses = {}
+
+with st.form("questionnaire_form"):
+    for question_key in questions:
+        # Use the translated label for the question
+        question_text = labels.get(
+            question_key, f"Question {question_key} (No translation)"
+        )
+        responses[question_key] = st.text_input(question_text)
+
+    submitted = st.form_submit_button("Submit")
+
+if submitted:
+    timestamp = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
+    filename = f"cotton_response_{timestamp}.csv"
+    df = pd.DataFrame([responses])
+    df.to_csv(filename, index=False)
+    st.success
