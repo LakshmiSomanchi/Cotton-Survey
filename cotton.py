@@ -488,6 +488,44 @@ with st.form("questionnaire_form"):
             responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
         elif question_key == "31":
             responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+             elif question_key == "33":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+        elif question_key == "57":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+ elif question_key == "77":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+        elif question_key == "80":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+ elif question_key == "82":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+        elif question_key == "86":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+ elif question_key == "87":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+        elif question_key == "89":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+ elif question_key == "90":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+        elif question_key == "91":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+ elif question_key == "93":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+        elif question_key == "95":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+ elif question_key == "97":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+        elif question_key == "100":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+ elif question_key == "101":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+        elif question_key == "102":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+ elif question_key == "103":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+        elif question_key == "104":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+ elif question_key == "105":
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
         elif question_key == "32":
             responses[question_key] = st.selectbox(question_text, ["FPO", "FPC", "SHG", "Agri. Department", "HGOs", "Private company", "Other"])
         elif question_key == "44":
