@@ -339,7 +339,7 @@ dict_translations = {
         "104": "कामगारांसाठी शौचालयाची कोणतीही तरतूद",
         "105": "कुटुंबातील सदस्यांना (महिला) कृषी कार्यात सहभागी करणे",
         "106": "कोणतीही सामुदायिक जल संचयन रचना (होय/नाही)",
-        "107": "मातीतील ओलावा मीटरचा वापर (होय/नाही)",
+        "107": "मातीतील ओलावा मीटरचा वापर (होय/नाही)"
     },
     "Gujarati": {
         "1": "ખેડૂત ટ્રેસનેટ કોડ",
@@ -463,7 +463,9 @@ responses = {}
 with st.form("questionnaire_form"):
     for question_key in questions:
         # Use the translated label for the question
-        question_text = labels.get(question_key, f"Question {question_key} (No translation)")
+        question_text = labels.get(
+            question_key, f"Question {question_key} (No translation)"
+        )
         responses[question_key] = st.text_input(question_text)
 
     submitted = st.form_submit_button("Submit")
@@ -473,4 +475,4 @@ if submitted:
     filename = f"cotton_response_{timestamp}.csv"
     df = pd.DataFrame([responses])
     df.to_csv(filename, index=False)
-    st.success("Thank you! Your
+    st.success
