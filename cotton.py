@@ -6,7 +6,13 @@ import datetime
 import os
 
 st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
-st.title("Cotton Farming Questionnaire (कपास किसान सर्वे)")
+st.title("Cotton Farming Questionnaire (किसान सर्वे)")
+
+language = st.selectbox("Select Language / भाषा निवडा / ભાષા પસંદ કરો", ["English", "Hindi", "Marathi", "Gujarati"])
+
+translations = {
+    "Hindi": "हिंदी", "Marathi": "मराठी", "Gujarati": "ગુજરાતી"
+}
 
 questions = [
     "Farmer Tracenet Code",
