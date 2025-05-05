@@ -87,7 +87,7 @@ dict_translations = {
         "106": "Any community water harvesting structure (Y/N)",
         "107": "Use of soil moisture meter (Y/N)",
     },
-    "Hindi": {
+   "Hindi": {
         "1": "किसान ट्रेसेनेट कोड",
         "2": "किसान का पूरा नाम",
         "3": "मोबाइल नंबर",
@@ -440,6 +440,8 @@ with st.form("questionnaire_form"):
             responses[question_key] = st.selectbox(question_text, ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"])
         elif question_key == "54":  # Irrigation cost
             responses[question_key] = st.text_input(question_text)
+        elif question_key in ["29", "30", "33", "86", "87", "89", "90", "93", "95", "97", "100", "101", "106", "107"]:  # Y/N Questions
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
         elif question_key == "55":  # No. of irrigation required
             responses[question_key] = st.text_input(question_text)
         elif question_key == "56":  # Irrigation method
