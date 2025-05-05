@@ -475,6 +475,11 @@ with st.form("questionnaire_form"):
                     st.error("Please enter exactly three months separated by commas.")
         else:
             responses[question_key] = st.text_input(question_text)
+            
+    # Add an option to upload a photo
+    uploaded_file = st.file_uploader("Upload a photo of your farm or crops", type=["jpg", "jpeg", "png"])
+    if uploaded_file is not None:
+        responses["uploaded_photo"] = uploaded_file.name
 
     submitted = st.form_submit_button("Submit")
 
