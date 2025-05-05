@@ -495,7 +495,7 @@ st.divider()
 st.header("🔐 Admin Real-Time Access")
 
 # Allowed Emails
-ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org", "rsomanchi@tns.org", "mkaushal@tns.org"]
+ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org", "rsomanchi@tns.org", "mkaushal@tns.org", "bkharoo@tns.org", "rladdha@tns.org"]
 admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
 
 if admin_email in ALLOWED_EMAILS:
