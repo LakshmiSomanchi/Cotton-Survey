@@ -11,7 +11,7 @@ st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
 st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
 
 language = st.selectbox(
-    "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
+    "Select Language / भाषा निवडा / ભાષा પસંદ કરો",
     ["English", "Hindi", "Marathi", "Gujarati"],
 )
 
@@ -41,7 +41,6 @@ dict_translations = {
         "22": "Years since practicing organic cotton (#)",
         "23": "Certification status (certified/IC1..)",
         "24": "Source of irrigation",
-        "25": "Cultivable area (acre)",
         "26": "No. of cattle (cow and Buffalo)",
         "27": "Source of drinking water",
         "28": "Preferred selling point (Aggregator/Suminter/APMC/other)",
@@ -54,7 +53,6 @@ dict_translations = {
         "35": "Primary source of income",
         "36": "Secondary source of income",
         "37": "Income from Primary source (Rs.)",
-        "38": "Certification cost per annum/acre",
         "39": "Avg. production of organic cotton/acre (Kg)",
         "40": "Cost of cultivation/acre (Rs)",
         "41": "Quantity sold of organic cotton (in kg)",
@@ -62,52 +60,16 @@ dict_translations = {
         "43": "Material cost for bio-inputs",
         "44": "Name of bio-input used for pest and disease management",
         "45": "Name of bio-fertilizer/compost used",
-        "46": "Dose of bio-fertilizer/compost used/acre",
-        "47": "No. of pheromone traps used / acre",
-        "48": "Cost per pheromone trap",
-        "49": "No. of Yellow sticky traps used / acre",
-        "50": "Cost per yellow sticky trap",
-        "51": "No. of Blue sticky traps used / acre",
-        "52": "Cost per blue sticky trap",
-        "53": "No. of bird perches used / acre",
         "54": "Irrigation cost/acre",
         "55": "No. of irrigation required for organic cotton",
         "56": "Irrigation method used",
-        "57": "Any farm machinery hired (Y/N)",
-        "58": "Cost of machinery hiring (Rs.)",
-        "59": "Local labour cost per day",
-        "60": "Migrant labour cost per day",
-        "61": "No. of workers required during sowing/acre",
-        "62": "No. of workers required during harvesting/acre",
         "63": "Harvesting time (1st, 2nd & 3rd picking) (month)",
-        "64": "Weeding method used (manual/mechanical)",
-        "65": "Weeding cost/acre",
-        "66": "Cost of mulching/acre",
-        "67": "No. of tillage practiced",
-        "68": "Tillage cost/acre",
-        "69": "Land preparation cost/acre",
-        "70": "Cost of organic seed per acre",
-        "71": "Seed rate of organic cotton/acre",
-        "72": "Variety of organic cotton seed (Name)",
-        "73": "Name of border crop used",
-        "74": "Name of the inter crop used",
-        "75": "Name of cover crop",
-        "76": "Name of trap crop",
-        "77": "Mulching used (Y/N)",
         "78": "Type of mulching used (Bio-plastic/green/dry)",
-        "79": "What precautions used during storage",
-        "80": "Hired vehicle used for transportation of seed cotton (Y/N)",
-        "81": "Transportation cost (Rs.)/Kg of seed cotton",
-        "82": "Any quantity rejection due to contamination/impurities (Kg)",
-        "83": "Price discovery mechanism",
         "84": "Payment Transaction type (Cash/online)",
-        "85": "Days of credit after sell",
         "86": "Availing any govt. scheme or subsidy benefits (Y/N)",
         "87": "Opted for crop insurance (Y/N)",
-        "88": "Cost of crop insurance per acre",
         "89": "Possess KCC (Y/N)",
         "90": "Possess active bank account (Y/N)",
-        "91": "Any agri loan from Bank (Y/N)",
         "92": "What was the Previous crop in the same land",
         "93": "Crop rotation used (Y/N)",
         "94": "Crops used for rotation",
@@ -468,96 +430,45 @@ with st.form("questionnaire_form"):
         question_text = labels.get(
             question_key, f"Question {question_key} (No translation)"
         )
-        
+
         # Define dropdown options for specific questions
-        if question_key == "5":
-            responses[question_key] = st.selectbox(question_text, ["Below SSC", "SSC", "HSC", "Graduation", "Post Graduation"])
-        elif question_key == "8":
-            responses[question_key] = st.selectbox(question_text, ["Morbi", "Surendranagar", "Kutch", "Akola"])
-        elif question_key == "9":
-            responses[question_key] = st.selectbox(question_text, ["Gujarat", "Maharashtra"])
-        elif question_key == "23":
-            responses[question_key] = st.selectbox(question_text, ["IC1", "IC2", "IC3", "Not certified"])
-        elif question_key == "24":
-            responses[question_key] = st.selectbox(question_text, ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond"])
-        elif question_key == "25":
-            responses[question_key] = st.selectbox(question_text, ["Irrigated", "Rainfed"])
-        elif question_key == "28":
-            responses[question_key] = st.selectbox(question_text, ["Aggregator", "Suminter", "APMC", "Others"])
-        elif question_key == "30":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "31":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "33":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "57":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "77":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "80":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "82":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "86":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "87":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "89":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "90":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "91":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "93":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "95":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "97":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "100":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "101":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "102":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "103":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "104":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "105":
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
-        elif question_key == "32":
-            responses[question_key] = st.selectbox(question_text, ["FPO", "FPC", "SHG", "Agri. Department", "HGOs", "Private company", "Other"])
-        elif question_key == "44":
-            responses[question_key] = st.selectbox(question_text, ["NSKE", "Neem oil", "Beaveria bassiana", "Metarhizium Aenosoplae", "Dashparni Ark", "Verticillium Leccani", "Panch Parni ark", "Agniastra", "Brahmastra", "Neemastra", "Buttermilk", "Onion", "Garlic paste"])
-        elif question_key == "45":
-            responses[question_key] = st.selectbox(question_text, ["FYM compost", "Vermicompost", "Azatobacter", "Phosphate solubilizing bacteria", "Rhizobium", "Azospirillium", "Pseudomonas", "Jeevamrut", "Ghanjivamrut", "Neem cake", "Castor cake", "Akada ark"])
-        elif question_key == "56":
-            responses[question_key] = st.selectbox(question_text, ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Other"])
-        elif question_key == "64":
-            responses[question_key] = st.selectbox(question_text, ["Manual", "Mechanical"])
-        elif question_key == "78":
-            responses[question_key] = st.selectbox(question_text, ["Bio-plastic", "Green", "Dry"])
-        elif question_key == "84":
-            responses[question_key] = st.selectbox(question_text, ["Cash", "Online", "Cheque"])
-        elif question_key == "85":
-            responses[question_key] = st.selectbox(question_text, ["1-2 days", "1 week", "15 days", "1 month & above"])
-        elif question_key == "98":
-            responses[question_key] = st.selectbox(question_text, ["Fuel", "Cattle feed", "Biochar", "In-situ composting", "Burning"])
-        elif question_key == "99":
-            responses[question_key] = st.selectbox(question_text, ["Cash", "Online"])
+        if question_key == "4":  # Gender
+            responses[question_key] = st.selectbox(question_text, ["Male", "Female", "Others"])
+            if responses[question_key] == "Others":
+                responses["others_gender"] = st.text_input("If selected Others, please specify:")
+        elif question_key == "24":  # Source of irrigation
+            responses[question_key] = st.selectbox(question_text, ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"])
+        elif question_key == "54":  # Irrigation cost
+            responses[question_key] = st.text_input(question_text)
+        elif question_key == "55":  # No. of irrigation required
+            responses[question_key] = st.text_input(question_text)
+        elif question_key == "56":  # Irrigation method
+            responses[question_key] = st.selectbox(question_text, ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other"])
+        elif question_key == "63":  # Harvesting time
+            responses[question_key] = st.text_input(question_text, placeholder="e.g., month 1, month 2, month 3")
+            # Validate comma-separated entries
+            if responses[question_key]:
+                months = responses[question_key].split(',')
+                if len(months) != 3:
+                    st.error("Please enter exactly three months separated by commas.")
+        elif question_key == "107":  # Farm photo
+            responses[question_key] = st.file_uploader("Upload a farm photo", type=["jpg", "jpeg", "png"])
+        elif question_key == "108":  # Name of the surveyor
+            responses[question_key] = st.text_input("Name of the surveyor")
+        elif question_key == "109":  # Timestamp
+            responses[question_key] = datetime.datetime.now().strftime("%Y-%m-%d %H:%M:%S")
         else:
             responses[question_key] = st.text_input(question_text)
 
     submitted = st.form_submit_button("Submit")
 
-if submitted:
-    now = datetime.datetime.now()
-    data = responses
-    df = pd.DataFrame([data])
-    filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-    df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
-    st.success("✅ Survey Submitted and Saved!")
+    if submitted:
+        now = datetime.datetime.now()
+        data = responses
+        df = pd.DataFrame([data])
+        filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+        df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
+        st.success("✅ Survey Submitted and Saved!")
 
 st.divider()
 st.header("🔐 Admin Real-Time Access")
