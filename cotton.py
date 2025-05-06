@@ -483,7 +483,10 @@ with st.form("questionnaire_form"):
 
     submitted = st.form_submit_button("Submit")
 
-     # Data Validation
+    # Inside your form where you collect the phone number
+responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
+
+# Data Validation
 if submitted:
     # Check for required fields
     required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
@@ -492,20 +495,25 @@ if submitted:
             st.error(f"Field '{labels[field]}' is required.")
             break
     else:
-        # Validate numeric fields
-        numeric_fields = ["11", "12", "13", "14", "15", "16", "17", "34", "37", "39", "41"]
-        for field in numeric_fields:
-            if not str(responses.get(field)).isdigit() or int(responses.get(field)) < 0:
-                st.error(f"Field '{labels[field]}' must be a non-negative number.")
-                break
+        # Validate phone number length
+        phone_number = responses.get("3")
+        if phone_number and (len(phone_number) != 10 or not phone_number.isdigit()):
+            st.error("Mobile no. must be exactly 10 digits.")
         else:
-            # If all validations pass, save the data
-            now = datetime.datetime.now()
-            data = responses
-            df = pd.DataFrame([data])
-            filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-            df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
-            st.success("✅ Survey Submitted and Saved!")
+            # Validate numeric fields
+            numeric_fields = ["11", "12", "13", "14", "15", "16", "17", "34", "37", "39", "41"]
+            for field in numeric_fields:
+                if not str(responses.get(field)).isdigit() or int(responses.get(field)) < 0:
+                    st.error(f"Field '{labels[field]}' must be a non-negative number.")
+                    break
+            else:
+                # If all validations pass, save the data
+                now = datetime.datetime.now()
+                data = responses
+                df = pd.DataFrame([data])
+                filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+                df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
+                st.success("✅ Survey Submitted and Saved!")
 
 st.divider()
 st.header("🔐 Admin Real-Time Access")
