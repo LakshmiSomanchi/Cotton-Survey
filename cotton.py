@@ -500,7 +500,17 @@ if submitted:
                 # If all validations pass, save the data
                 now = datetime.datetime.now()
                 data = responses
-                df = pd.DataFrame([data])
+               # Use English labels for CSV headers
+english_labels = dict_translations["English"]
+data = {english_labels.get(k, k): v for k, v in responses.items() if k in english_labels}
+
+# Include any non-question keys like 'uploaded_photo'
+for k in responses:
+    if k not in english_labels:
+        data[k] = responses[k]
+
+df = pd.DataFrame([data])
+
                 filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
                 df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
                 st.success("✅ Survey Submitted and Saved!")
