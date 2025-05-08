@@ -481,11 +481,10 @@ with st.form("questionnaire_form"):
         responses["uploaded_photo"] = uploaded_file.name
         submitted = st.form_submit_button("Submit")
         
-    # Inside your form where you collect the phone number
 responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
 
-   # Data Validation
-   if submitted:
+# Data Validation
+if submitted:
     # Check for required fields
     required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
     for field in required_fields:
