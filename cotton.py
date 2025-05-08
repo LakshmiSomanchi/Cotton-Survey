@@ -479,8 +479,7 @@ with st.form("questionnaire_form"):
     uploaded_file = st.file_uploader("Upload a photo of your farm or crops", type=["jpg", "jpeg", "png"])
     if uploaded_file is not None:
         responses["uploaded_photo"] = uploaded_file.name
-        
-         submitted = st.form_submit_button("Submit")
+        submitted = st.form_submit_button("Submit")
         
     # Inside your form where you collect the phone number
 responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
