@@ -518,11 +518,10 @@ for k in responses:
     if k not in english_labels:
         data[k] = responses[k]
 
-df = pd.DataFrame([data])
-
-                filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-                df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
-                st.success("✅ Survey Submitted and Saved!")
+         df = pd.DataFrame([data])
+          filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+          df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
+          st.success("✅ Survey Submitted and Saved!")
 
 st.divider()
 st.header("🔐 Admin Real-Time Access")
