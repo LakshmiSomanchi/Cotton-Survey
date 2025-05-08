@@ -475,13 +475,19 @@ with st.form("questionnaire_form"):
         else:
             responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
 
-    # Add an option to upload a photo
-    uploaded_file = st.file_uploader("Upload a photo of your farm or crops", type=["jpg", "jpeg", "png"], key="uploaded_photo")
-    if uploaded_file is not None:
-        responses["uploaded_photo"] = uploaded_file.name
+    # Directory to save uploaded photos
+PHOTOS_DIR = "photos"
+os.makedirs(PHOTOS_DIR, exist_ok=True)
 
-    # Submit Button
-    submitted = st.form_submit_button("Submit")
+# Add photo upload functionality in the form
+uploaded_file = st.file_uploader("Upload a photo of your farm or crops", type=["jpg", "jpeg", "png"], key="uploaded_photo")
+if uploaded_file is not None:
+    # Save the photo permanently
+    photo_path = os.path.join(PHOTOS_DIR, uploaded_file.name)
+    with open(photo_path, "wb") as f:
+        shutil.copyfileobj(uploaded_file, f)
+    st.success(f"✅ Photo saved as: {uploaded_file.name}")
+    responses["uploaded_photo"] = uploaded_file.name  # Save filename in responses
         
 responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
 
