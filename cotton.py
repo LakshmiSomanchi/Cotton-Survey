@@ -475,6 +475,14 @@ with st.form("questionnaire_form"):
         else:
             responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
 
+    # Submit Button
+    submitted = st.form_submit_button("Submit")
+
+# Outside the form: Handle submission
+if submitted:
+    # Perform validation and save responses
+    st.success("Form submitted successfully!")
+
     # Directory to save uploaded photos
 PHOTOS_DIR = "photos"
 os.makedirs(PHOTOS_DIR, exist_ok=True)
