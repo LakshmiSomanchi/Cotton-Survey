@@ -454,32 +454,34 @@ with st.form("questionnaire_form"):
 
         # Define dropdown options for specific questions
         if question_key == "4":  # Gender
-            responses[question_key] = st.selectbox(question_text, ["Male", "Female", "Others"])
+            responses[question_key] = st.selectbox(question_text, ["Male", "Female", "Others"], key=f"question_{question_key}")
             if responses[question_key] == "Others":
-                responses["others_gender"] = st.text_input("If selected Others, please specify:")
+                responses["others_gender"] = st.text_input("If selected Others, please specify:", key="others_gender")
         elif question_key == "24":  # Source of irrigation
-            responses[question_key] = st.selectbox(question_text, ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"])
+            responses[question_key] = st.selectbox(question_text, ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"], key=f"question_{question_key}")
         elif question_key in ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "102", "103"]:  # Y/N Questions
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"])
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
         elif question_key in ["62", "64", "65", "68", "69", "70", "71", "72", "73", "74", "80", "82", "83", "94", "95"]:  # Other specific questions
-            responses[question_key] = st.text_input(question_text)
+            responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
         elif question_key == "55":  # Irrigation method
-            responses[question_key] = st.selectbox(question_text, ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other"])
+            responses[question_key] = st.selectbox(question_text, ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other"], key=f"question_{question_key}")
         elif question_key == "62":  # Harvesting time
-            responses[question_key] = st.text_input(question_text, placeholder="e.g., month 1, month 2, month 3")
+            responses[question_key] = st.text_input(question_text, placeholder="e.g., month 1, month 2, month 3", key=f"question_{question_key}")
             # Validate comma-separated entries
             if responses[question_key]:
                 months = responses[question_key].split(',')
                 if len(months) != 3:
                     st.error("Please enter exactly three months separated by commas.")
         else:
-            responses[question_key] = st.text_input(question_text)
-            
+            responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+
     # Add an option to upload a photo
-    uploaded_file = st.file_uploader("Upload a photo of your farm or crops", type=["jpg", "jpeg", "png"])
+    uploaded_file = st.file_uploader("Upload a photo of your farm or crops", type=["jpg", "jpeg", "png"], key="uploaded_photo")
     if uploaded_file is not None:
         responses["uploaded_photo"] = uploaded_file.name
-        submitted = st.form_submit_button("Submit")
+
+    # Submit Button
+    submitted = st.form_submit_button("Submit")
         
 responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
 
