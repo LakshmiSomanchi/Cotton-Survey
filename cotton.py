@@ -488,7 +488,7 @@ PHOTOS_DIR = "photos"
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 # Admin access to view and download uploaded images
-if st.checkbox("🖼️ View and Download Uploaded Images"):
+if st.checkbox("🖼️ View and Download Uploaded Images", key="view_download_images_1"):
     # List all image files in the PHOTOS_DIR folder
     image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
 
@@ -554,7 +554,8 @@ admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
 if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
     # Add image access for admin
-if st.checkbox("🖼️ View and Download Uploaded Images"):
+if st.checkbox("🖼️ View and Download Uploaded Images", key="view_download_images_2"):
+    # Code for admin-specific image access
     # List all image files in the SAVE_DIR folder
     image_files = [f for f in os.listdir(SAVE_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
     if image_files:
