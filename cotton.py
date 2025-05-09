@@ -587,6 +587,34 @@ else:
                 df = pd.DataFrame([data])
                 df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
                 st.success("✅ Survey Submitted and Saved!")
+    # Check for duplicate submissions
+files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
+duplicate_found = False
+for file in files:
+    df = pd.read_csv(os.path.join(SAVE_DIR, file))
+    
+    # Debug column names
+    print(df.columns)  # Debugging step to see available columns
+    
+    # Check if the required column exists
+    if "Farmer Tracenet Code" not in df.columns:
+        st.error(f"The required column 'Farmer Tracenet Code' is missing in {file}.")
+        continue
+
+    # Check for duplicate entries
+    if responses["1"] in df["Farmer Tracenet Code"].values:
+        st.error("You have already submitted this form.")
+        duplicate_found = True
+        break
+
+if not duplicate_found:
+    # Save responses as a CSV file
+    data = {labels.get(k, k): v for k, v in responses.items()}
+    now = datetime.datetime.now()
+    filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+    df = pd.DataFrame([data])
+    df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
+    st.success("✅ Survey Submitted and Saved!")
 
 # Admin Real-Time Access
 st.divider()
