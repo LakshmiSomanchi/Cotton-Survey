@@ -610,17 +610,9 @@ if st.checkbox("📄 View Past Submissions"):
         )
     else:
         st.warning("⚠️ No submissions found yet.")
-         import os
-from PIL import Image, UnidentifiedImageError
-import streamlit as st
-
-# Directory where images are saved
-PHOTOS_DIR = "photos"
-os.makedirs(PHOTOS_DIR, exist_ok=True)  # Ensure the directory exists
-
-# Function to display and download images
+# Add image access for admin
 if st.checkbox("🖼️ View and Download Uploaded Images"):
-    # List all files in the photos directory
+    # List all image files in the PHOTOS_DIR folder
     image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
 
     if image_files:
@@ -628,12 +620,12 @@ if st.checkbox("🖼️ View and Download Uploaded Images"):
             img_path = os.path.join(PHOTOS_DIR, img_file)
 
             try:
-                # Open and display the image
+                # Validate and display the image using PIL
                 with open(img_path, "rb") as f:
                     img = Image.open(f)
                     st.image(img, caption=img_file, use_container_width=True)
 
-                # Provide a download button
+                # Provide download button for the image
                 with open(img_path, "rb") as img:
                     st.download_button(
                         label=f"⬇️ Download {img_file}",
@@ -641,9 +633,7 @@ if st.checkbox("🖼️ View and Download Uploaded Images"):
                         file_name=img_file,
                         mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
                     )
-            except UnidentifiedImageError:
-                st.error(f"File '{img_file}' is not a valid image and cannot be displayed.")
             except Exception as e:
-                st.error(f"An error occurred while processing the file '{img_file}': {e}")
+                st.error(f"Error loading image {img_file}: {e}")
     else:
-        st.warning("⚠️ No images found in the 'photos' directory.")
+        st.warning("⚠️ No images found.")
