@@ -588,25 +588,6 @@ else:
                 df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
                 st.success("✅ Survey Submitted and Saved!")
    
-for file in files:
-    df = pd.read_csv(os.path.join(SAVE_DIR, file))
-    
-    # Debugging: Print available columns in the DataFrame
-    st.write(f"Columns in {file}: {list(df.columns)}")  # Display column names for debugging
-    
-    # Normalize column names to handle variations (e.g., spaces, casing)
-    df.columns = df.columns.str.strip().str.lower()
-    
-    # Check if the required column exists
-    if "farmer tracenet code" not in df.columns:
-        st.warning(f"The required column 'Farmer Tracenet Code' is missing in {file}. Skipping this file.")
-        continue  # Skip to the next file if the column is missing
-
-    # Check for duplicate entries (normalize the responses key as well)
-    if responses["1"].strip().lower() in df["farmer tracenet code"].str.strip().str.lower().values:
-        st.error("You have already submitted this form.")
-        duplicate_found = True
-        break
 
 # Admin Real-Time Access
 st.divider()
