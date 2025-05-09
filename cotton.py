@@ -587,8 +587,27 @@ admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
 
 if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
+else:
+    if admin_email:
+        st.error("❌ Not an authorized admin.")
 
-    # Add image access for admin
+if st.checkbox("📄 View Past Submissions"):
+    files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
+    if files:
+        all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
+        st.dataframe(all_data)
+
+        csv = all_data.to_csv(index=False).encode('utf-8')
+        st.download_button(
+            label="⬇️ Download All Responses",
+            data=csv,
+            file_name='all_survey_responses.csv',
+            mime='text/csv',
+            key='public_csv_download'
+        )
+    else:
+        st.warning("⚠️ No submissions found yet.")
+           # Add image access for admin
     if st.checkbox("🖼️ View and Download Uploaded Images"):
         # List all image files in the PHOTOS_DIR folder
         image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
@@ -615,23 +634,3 @@ if admin_email in ALLOWED_EMAILS:
                     st.error(f"Error loading image {img_file}: {e}")
         else:
             st.warning("⚠️ No images found.")
-else:
-    if admin_email:
-        st.error("❌ Not an authorized admin.")
-
-if st.checkbox("📄 View Past Submissions"):
-    files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
-    if files:
-        all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
-        st.dataframe(all_data)
-
-        csv = all_data.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="⬇️ Download All Responses",
-            data=csv,
-            file_name='all_survey_responses.csv',
-            mime='text/csv',
-            key='public_csv_download'
-        )
-    else:
-        st.warning("⚠️ No submissions found yet.")
