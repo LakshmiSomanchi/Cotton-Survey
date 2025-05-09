@@ -604,7 +604,8 @@ if admin_email in ALLOWED_EMAILS:
                     with open(img_path, "rb") as img_file_obj:
                         img_data = img_file_obj.read()
                         Image.open(io.BytesIO(img_data)).verify()
-
+                      img = Image.open("path_to_image.jpg")
+                      img.show()  # To display the image
                     # Display the image
                     st.image(img_path, caption=img_file, use_container_width=True)
 
