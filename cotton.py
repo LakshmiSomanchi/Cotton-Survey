@@ -613,26 +613,28 @@ admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
 
 if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
+    # Add image access for admin
+    if st.checkbox("🖼️ View and Download Uploaded Images", key="view_download_images_2"):
+        # Code for admin-specific image access
+        # List all image files in the SAVE_DIR folder
+        image_files = [f for f in os.listdir(SAVE_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        if image_files:
+            for img_file in image_files:
+                img_path = os.path.join(SAVE_DIR, img_file)
                 
-    else:
-        st.warning("⚠️ No images found.")
+                # Display image
+                st.image(img_path, caption=img_file, use_column_width=True)
+                
+                # Provide download button for the image
+                with open(img_path, "rb") as img:
+                    st.download_button(
+                        label=f"⬇️ Download {img_file}",
+                        data=img,
+                        file_name=img_file,
+                        mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
+                    )
+        else:
+            st.warning("⚠️ No images found.")
 else:
     if admin_email:
         st.error("❌ Not an authorized admin.")
-
-if st.checkbox("📄 View Past Submissions"):
-    files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
-    if files:
-        all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
-        st.dataframe(all_data)
-
-        csv = all_data.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="⬇️ Download All Responses",
-            data=csv,
-            file_name='all_survey_responses.csv',
-            mime='text/csv',
-            key='public_csv_download'
-        )
-    else:
-        st.warning("⚠️ No submissions found yet.")
