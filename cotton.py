@@ -444,7 +444,67 @@ questions = [str(i) for i in range(1, 104)]  # Create a list of strings from "1"
 labels = dict_translations.get(language, dict_translations["English"])
 
 responses = {}
+# Directory where images are saved
+PHOTOS_DIR = "photos"
+os.makedirs(PHOTOS_DIR, exist_ok=True)
 
+# Add a photo upload option in the form
+with st.form("questionnaire_form"):
+    for question_key in questions:
+        # Use the translated label for the question
+        question_text = labels.get(
+            question_key, f"Question {question_key} (No translation)"
+        )
+
+        # Define dropdown options for specific questions
+        if question_key == "4":  # Gender
+            responses[question_key] = st.selectbox(
+                question_text, ["Male", "Female", "Others"], key=f"question_{question_key}"
+            )
+            if responses[question_key] == "Others":
+                responses["others_gender"] = st.text_input("If selected Others, please specify:", key="others_gender")
+        else:
+            responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+
+    # Add file uploader for photo upload
+    uploaded_photo = st.file_uploader(
+        "Upload a photo (optional):",
+        type=["jpg", "jpeg", "png"],
+        key="uploaded_photo"
+    )
+    
+    # Submit Button
+    submitted = st.form_submit_button("Submit")
+
+# Handle the uploaded photo
+if submitted:
+    if uploaded_photo is not None:
+        # Save the uploaded photo
+        photo_path = os.path.join(PHOTOS_DIR, uploaded_photo.name)
+        with open(photo_path, "wb") as f:
+            f.write(uploaded_photo.getbuffer())
+        
+        st.success(f"Photo uploaded and saved as {uploaded_photo.name}.")
+    
+    # Handle other responses
+    st.success("Form submitted successfully!")
+    # Save responses as CSV
+    data = {labels.get(k, k): v for k, v in responses.items()}
+    now = datetime.datetime.now()
+    filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+    df = pd.DataFrame([data])
+    df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
+    st.success("✅ Survey Submitted and Saved!")
+
+# Admin access to view uploaded images
+if st.checkbox("🖼️ View and Download Uploaded Images"):
+    image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    if image_files:
+        for img_file in image_files:
+            img_path = os.path.join(PHOTOS_DIR, img_file)
+            st.image(img_path, caption=img_file, use_column_width=True)
+    else:
+        st.warning("⚠️ No images found.")
 with st.form("questionnaire_form"):
     for question_key in questions:
         # Use the translated label for the question
