@@ -3,6 +3,7 @@ import pandas as pd
 import datetime
 import os
 import io
+from PIL import Image
 # Set the directory to save responses
 SAVE_DIR = "responses"
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -599,11 +600,6 @@ if admin_email in ALLOWED_EMAILS:
         if image_files:
             for img_file in image_files:
                 img_path = os.path.join(PHOTOS_DIR, img_file)
-                try:
-                    # Validate the image file before displaying
-                    with open(img_path, "rb") as img_file_obj:
-                        img_data = img_file_obj.read()
-                        Image.open(io.BytesIO(img_data)).verify()
                       img = Image.open("path_to_image.jpg")
                       img.show()  # To display the image
                     # Display the image
