@@ -496,19 +496,11 @@ if st.checkbox("🖼️ View and Download Uploaded Images"):
         for img_file in image_files:
             img_path = os.path.join(PHOTOS_DIR, img_file)
             
-            # Display image
-            st.image(img_path, caption=img_file, use_column_width=True)
-            
-            # Provide download button for the image
-            with open(img_path, "rb") as img:
-                st.download_button(
-                    label=f"⬇️ Download {img_file}",
-                    data=img,
-                    file_name=img_file,
-                    mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
-                )
-    else:
-        st.warning("⚠️ No images found.")
+    try:
+    # Display image with error handling
+    st.image(img_path, caption=img_file, use_column_width=True)
+except Exception as e:
+    st.error(f"Error displaying image {img_file}: {e}")
         
 responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
 
