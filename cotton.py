@@ -603,30 +603,25 @@ for file in files:
         st.warning(f"The required column 'Farmer Tracenet Code' is missing in {file}. Skipping this file.")
         continue  # Skip to the next file if the column is missing
 
-    # Check for duplicate entries
-    if responses["1"] in df["Farmer Tracenet Code"].values:
+for file in files:
+    df = pd.read_csv(os.path.join(SAVE_DIR, file))
+    
+    # Debugging: Print available columns in the DataFrame
+    st.write(f"Columns in {file}: {list(df.columns)}")  # Display column names for debugging
+    
+    # Normalize column names to handle variations (e.g., spaces, casing)
+    df.columns = df.columns.str.strip().str.lower()
+    
+    # Check if the required column exists
+    if "farmer tracenet code" not in df.columns:
+        st.warning(f"The required column 'Farmer Tracenet Code' is missing in {file}. Skipping this file.")
+        continue  # Skip to the next file if the column is missing
+
+    # Check for duplicate entries (normalize the responses key as well)
+    if responses["1"].strip().lower() in df["farmer tracenet code"].str.strip().str.lower().values:
         st.error("You have already submitted this form.")
         duplicate_found = True
         break
-
-if not duplicate_found:
-    # Save the uploaded photo (if available)
-    if uploaded_photo:
-        photo_path = os.path.join(PHOTOS_DIR, uploaded_photo.name)
-        try:
-            with open(photo_path, "wb") as f:
-                f.write(uploaded_photo.getbuffer())
-            st.success(f"Photo uploaded and saved as {uploaded_photo.name}.")
-        except Exception as e:
-            st.error(f"Error saving photo: {e}")
-
-    # Save responses as a CSV file
-    data = {labels.get(k, k): v for k, v in responses.items()}
-    now = datetime.datetime.now()
-    filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-    df = pd.DataFrame([data])
-    df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
-    st.success("✅ Survey Submitted and Saved!")
 
 # Admin Real-Time Access
 st.divider()
