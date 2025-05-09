@@ -449,6 +449,7 @@ PHOTOS_DIR = "photos"
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 # Add a photo upload option in the form
+# Add a photo upload option in the form
 with st.form("questionnaire_form"):
     for question_key in questions:
         # Use the translated label for the question
@@ -462,15 +463,82 @@ with st.form("questionnaire_form"):
                 question_text, ["Male", "Female", "Others"], key=f"question_{question_key}"
             )
             if responses[question_key] == "Others":
-                responses["others_gender"] = st.text_input("If selected Others, please specify:", key="others_gender")
+                responses["others_gender"] = st.text_input(
+                    "If selected Others, please specify:", key="others_gender"
+                )
+
+        elif question_key == "24":  # Source of irrigation
+            responses[question_key] = st.selectbox(
+                question_text,
+                [
+                    "Canal",
+                    "Well",
+                    "Borewell",
+                    "River",
+                    "Farm Pond",
+                    "Community Pond",
+                    "Rain-fed not irrigated",
+                ],
+                key=f"question_{question_key}",
+            )
+
+        elif question_key in [
+            "29",
+            "30",
+            "33",
+            "56",
+            "75",
+            "78",
+            "84",
+            "85",
+            "87",
+            "88",
+            "89",
+            "91",
+            "93",
+            "96",
+            "97",
+            "102",
+            "103",
+        ]:  # Yes/No Questions
+            responses[question_key] = st.selectbox(
+                question_text, ["Yes", "No"], key=f"question_{question_key}"
+            )
+
+        elif question_key == "55":  # Irrigation method
+            responses[question_key] = st.selectbox(
+                question_text,
+                [
+                    "Drip irrigation",
+                    "Sprinkler irrigation",
+                    "Flood irrigation",
+                    "Ridge and Furrow Irrigation",
+                    "Other",
+                ],
+                key=f"question_{question_key}",
+            )
+        
+        elif question_key == "62":  # Harvesting time
+            responses[question_key] = st.text_input(
+                question_text,
+                placeholder="e.g., month 1, month 2, month 3",
+                key=f"question_{question_key}",
+            )
+            # Validate comma-separated entries
+            if responses[question_key]:
+                months = responses[question_key].split(",")
+                if len(months) != 3:
+                    st.error("Please enter exactly three months separated by commas.")
+
         else:
+            # Default to a text input for all other questions
             responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
 
     # Add file uploader for photo upload
     uploaded_photo = st.file_uploader(
         "Upload a photo (optional):",
         type=["jpg", "jpeg", "png"],
-        key="uploaded_photo"
+        key="uploaded_photo",
     )
     
     # Submit Button
@@ -478,105 +546,14 @@ with st.form("questionnaire_form"):
 
 # Handle the uploaded photo
 if submitted:
-    if uploaded_photo is not None:
-        # Save the uploaded photo
-        photo_path = os.path.join(PHOTOS_DIR, uploaded_photo.name)
-        with open(photo_path, "wb") as f:
-            f.write(uploaded_photo.getbuffer())
-        
-        st.success(f"Photo uploaded and saved as {uploaded_photo.name}.")
-    
-    # Handle other responses
-    st.success("Form submitted successfully!")
-    # Save responses as CSV
-    data = {labels.get(k, k): v for k, v in responses.items()}
-    now = datetime.datetime.now()
-    filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-    df = pd.DataFrame([data])
-    df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
-    st.success("✅ Survey Submitted and Saved!")
-
-# Admin access to view uploaded images
-if st.checkbox("🖼️ View and Download Uploaded Images"):
-    image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-    if image_files:
-        for img_file in image_files:
-            img_path = os.path.join(PHOTOS_DIR, img_file)
-            st.image(img_path, caption=img_file, use_column_width=True)
-    else:
-        st.warning("⚠️ No images found.")
-with st.form("questionnaire_form"):
-    for question_key in questions:
-        # Use the translated label for the question
-        question_text = labels.get(
-            question_key, f"Question {question_key} (No translation)"
-        )
-
-        # Define dropdown options for specific questions
-        if question_key == "4":  # Gender
-            responses[question_key] = st.selectbox(question_text, ["Male", "Female", "Others"], key=f"question_{question_key}")
-            if responses[question_key] == "Others":
-                responses["others_gender"] = st.text_input("If selected Others, please specify:", key="others_gender")
-        elif question_key == "24":  # Source of irrigation
-            responses[question_key] = st.selectbox(question_text, ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"], key=f"question_{question_key}")
-        elif question_key in ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "102", "103"]:  # Y/N Questions
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-        elif question_key in ["62", "64", "65", "68", "69", "70", "71", "72", "73", "74", "80", "82", "83", "94", "95"]:  # Other specific questions
-            responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
-        elif question_key == "55":  # Irrigation method
-            responses[question_key] = st.selectbox(question_text, ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other"], key=f"question_{question_key}")
-        elif question_key == "62":  # Harvesting time
-            responses[question_key] = st.text_input(question_text, placeholder="e.g., month 1, month 2, month 3", key=f"question_{question_key}")
-            # Validate comma-separated entries
-            if responses[question_key]:
-                months = responses[question_key].split(',')
-                if len(months) != 3:
-                    st.error("Please enter exactly three months separated by commas.")
-        else:
-            responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
-
-    # Submit Button
-    submitted = st.form_submit_button("Submit")
-
-# Outside the form: Handle submission
-if submitted:
-    # Perform validation and save responses
-    st.success("Form submitted successfully!")
-
-  # Directory where images are saved
-PHOTOS_DIR = "photos"
-os.makedirs(PHOTOS_DIR, exist_ok=True)
-
-# Admin access to view and download uploaded images
-if st.checkbox("🖼️ View and Download Uploaded Images", key="view_download_images_1"):
-    # List all image files in the PHOTOS_DIR folder
-    image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-
-    if image_files:
-        for img_file in image_files:
-            img_path = os.path.join(PHOTOS_DIR, img_file)
-            
-try:
-    # Display image with error handling
-    st.image(img_path, caption=img_file, use_column_width=True)
-except Exception as e:
-    if 'img_file' in locals():
-        st.error(f"Error displaying image {img_file}: {e}")
-    else:
-        st.error(f"Error displaying an image: {e}")
-        
-responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
-
-# Data Validation
-if submitted:
-    # Check for required fields
+    # Validate required fields
     required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
     for field in required_fields:
         if not responses.get(field):
             st.error(f"Field '{labels[field]}' is required.")
             break
     else:
-        # Validate phone number length
+        # Validate phone number
         phone_number = responses.get("3")
         if phone_number and (len(phone_number) != 10 or not phone_number.isdigit()):
             st.error("Mobile no. must be exactly 10 digits.")
@@ -588,53 +565,17 @@ if submitted:
                     st.error(f"Field '{labels[field]}' must be a non-negative number.")
                     break
             else:
-                # If all validations pass, save the data
+                # Save the uploaded photo (if available)
+                if uploaded_photo:
+                    photo_path = os.path.join(PHOTOS_DIR, uploaded_photo.name)
+                    with open(photo_path, "wb") as f:
+                        f.write(uploaded_photo.getbuffer())
+                    st.success(f"Photo uploaded and saved as {uploaded_photo.name}.")
+
+                # Save responses as a CSV file
+                data = {labels.get(k, k): v for k, v in responses.items()}
                 now = datetime.datetime.now()
-                
-# Ensure english_labels is defined
-english_labels = dict_translations.get("English", {})
-
-# Map responses keys (question numbers) to their English labels
-data = {english_labels.get(k, k): v for k, v in responses.items()}
-
-# Create DataFrame and save as CSV
-df = pd.DataFrame([data])
-now = datetime.datetime.now()
-filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
-st.success("✅ Survey Submitted and Saved!")
-
-st.divider()
-st.header("🔐 Admin Real-Time Access")
-
-# Allowed Emails
-ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org","rsomanchi@tns.org", "mkaushal@tns.org"]
-admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
-
-if admin_email in ALLOWED_EMAILS:
-    st.success("✅ Admin access granted! Real-time view enabled.")
-    # Add image access for admin
-    if st.checkbox("🖼️ View and Download Uploaded Images", key="view_download_images_2"):
-        # Code for admin-specific image access
-        # List all image files in the SAVE_DIR folder
-        image_files = [f for f in os.listdir(SAVE_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-        if image_files:
-            for img_file in image_files:
-                img_path = os.path.join(SAVE_DIR, img_file)
-                
-                # Display image
-                st.image(img_path, caption=img_file, use_column_width=True)
-                
-                # Provide download button for the image
-                with open(img_path, "rb") as img:
-                    st.download_button(
-                        label=f"⬇️ Download {img_file}",
-                        data=img,
-                        file_name=img_file,
-                        mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
-                    )
-        else:
-            st.warning("⚠️ No images found.")
-else:
-    if admin_email:
-        st.error("❌ Not an authorized admin.")
+                filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+                df = pd.DataFrame([data])
+                df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
+                st.success("✅ Survey Submitted and Saved!")
