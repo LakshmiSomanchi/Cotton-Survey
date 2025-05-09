@@ -599,36 +599,34 @@ admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
 if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
 
- # Admin access: View and Download Uploaded Images
-if st.checkbox("🖼️ View and Download Uploaded Images"):
-    image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-    if image_files:
-        for img_file in image_files:
-            img_path = os.path.join(PHOTOS_DIR, img_file)
-            try:
-                # Validate the image file before displaying
-                with open(img_path, "rb") as img_file_obj:
-                    img_data = img_file_obj.read()
-                    # Ensure the file can be opened as an image
-                    from PIL import Image
-                    Image.open(io.BytesIO(img_data)).verify()
-                
-                # Display the image
-                st.image(img_path, caption=img_file, use_container_width=True)
-                
-                # Provide a download button for the image
-                with open(img_path, "rb") as img:
-                    st.download_button(
-                        label=f"⬇️ Download {img_file}",
-                        data=img,
-                        file_name=img_file,
-                        mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
-                    )
-            except Exception as e:
-                # Handle invalid or corrupted image files
-                st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
-    else:
-        st.warning("⚠️ No images found.")
+
+    # View and Download Uploaded Images
+    if st.checkbox("🖼️ View and Download Uploaded Images"):
+        image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        if image_files:
+            for img_file in image_files:
+                img_path = os.path.join(PHOTOS_DIR, img_file)
+                try:
+                    # Validate the image file before displaying
+                    with open(img_path, "rb") as img_file_obj:
+                        img_data = img_file_obj.read()
+                        Image.open(io.BytesIO(img_data)).verify()
+
+                    # Display the image
+                    st.image(img_path, caption=img_file, use_container_width=True)
+
+                    # Provide a download button for the image
+                    with open(img_path, "rb") as img:
+                        st.download_button(
+                            label=f"⬇️ Download {img_file}",
+                            data=img,
+                            file_name=img_file,
+                            mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
+                        )
+                except Exception as e:
+                    st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
+        else:
+            st.warning("⚠️ No images found.")
 
     # View Past Submissions
     if st.checkbox("📄 View Past Submissions"):
