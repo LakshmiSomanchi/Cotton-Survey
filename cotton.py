@@ -483,26 +483,32 @@ if submitted:
     # Perform validation and save responses
     st.success("Form submitted successfully!")
 
-    # Directory to save uploaded photos
+  # Directory where images are saved
 PHOTOS_DIR = "photos"
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 
-import base64
+# Admin access to view and download uploaded images
+if st.checkbox("🖼️ View and Download Uploaded Images"):
+    # List all image files in the PHOTOS_DIR folder
+    image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
 
-uploaded_file = st.file_uploader("Upload a photo of your farm or crops", type=["jpg", "jpeg", "png"], key="uploaded_photo")
-if uploaded_file is not None:
-    # Save the photo permanently
-    photo_path = os.path.join(PHOTOS_DIR, uploaded_file.name)
-    with open(photo_path, "wb") as f:
-        f.write(uploaded_file.getbuffer())
-    st.success(f"✅ Photo saved: {photo_path}")
-
-    # Encode the image as Base64
-    with open(photo_path, "rb") as img_file:
-        base64_string = base64.b64encode(img_file.read()).decode('utf-8')
-    
-    # Save the Base64 string in responses
-    responses["uploaded_photo"] = base64_string
+    if image_files:
+        for img_file in image_files:
+            img_path = os.path.join(PHOTOS_DIR, img_file)
+            
+            # Display image
+            st.image(img_path, caption=img_file, use_column_width=True)
+            
+            # Provide download button for the image
+            with open(img_path, "rb") as img:
+                st.download_button(
+                    label=f"⬇️ Download {img_file}",
+                    data=img,
+                    file_name=img_file,
+                    mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
+                )
+    else:
+        st.warning("⚠️ No images found.")
         
 responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
 
@@ -529,6 +535,10 @@ if submitted:
             else:
                 # If all validations pass, save the data
                 now = datetime.datetime.now()
+                
+# Ensure english_labels is defined
+english_labels = dict_translations.get("English", {})
+
 # Map responses keys (question numbers) to their English labels
 data = {english_labels.get(k, k): v for k, v in responses.items()}
 
@@ -551,27 +561,6 @@ if admin_email in ALLOWED_EMAILS:
 else:
     if admin_email:
         st.error("❌ Not an authorized admin.")
-        # Add image access for admin
-if st.checkbox("🖼️ View and Download Uploaded Images"):
-    # List all image files in the SAVE_DIR folder
-    image_files = [f for f in os.listdir(SAVE_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-    if image_files:
-        for img_file in image_files:
-            img_path = os.path.join(SAVE_DIR, img_file)
-            
-            # Display image
-            st.image(img_path, caption=img_file, use_column_width=True)
-            
-            # Provide download button for the image
-            with open(img_path, "rb") as img:
-                st.download_button(
-                    label=f"⬇️ Download {img_file}",
-                    data=img,
-                    file_name=img_file,
-                    mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
-                )
-    else:
-        st.warning("⚠️ No images found.")
 
 if st.checkbox("📄 View Past Submissions"):
     files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
