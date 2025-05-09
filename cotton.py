@@ -598,6 +598,13 @@ if st.checkbox("🖼️ View and Download Uploaded Images"):
         for img_file in image_files:
             img_path = os.path.join(PHOTOS_DIR, img_file)
             try:
+                # Validate the image file before displaying
+                with open(img_path, "rb") as img_file_obj:
+                    img_data = img_file_obj.read()
+                    # Ensure the file can be opened as an image
+                    from PIL import Image
+                    Image.open(io.BytesIO(img_data)).verify()
+                
                 # Display the image
                 st.image(img_path, caption=img_file, use_container_width=True)
                 
@@ -610,7 +617,7 @@ if st.checkbox("🖼️ View and Download Uploaded Images"):
                         mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
                     )
             except Exception as e:
-                # Handle invalid image files
+                # Handle invalid or corrupted image files
                 st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
     else:
         st.warning("⚠️ No images found.")
