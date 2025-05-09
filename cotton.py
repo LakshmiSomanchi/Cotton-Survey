@@ -500,7 +500,10 @@ try:
     # Display image with error handling
     st.image(img_path, caption=img_file, use_column_width=True)
 except Exception as e:
-    st.error(f"Error displaying image {img_file}: {e}")
+    if 'img_file' in locals():
+        st.error(f"Error displaying image {img_file}: {e}")
+    else:
+        st.error(f"Error displaying an image: {e}")
         
 responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
 
