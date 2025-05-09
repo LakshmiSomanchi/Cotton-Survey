@@ -595,67 +595,49 @@ if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
 
 
-    # View and Download Uploaded Images
-    if st.checkbox("🖼️ View and Download Uploaded Images"):
-        image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-        if image_files:
-            for img_file in image_files:
-                img_path = os.path.join(PHOTOS_DIR, img_file)
-                img = Image.open("path_to_image.jpg")
-                img.show()  # To display the image
-                try:
-    # Validate the image file before displaying
-    with open(img_path, "rb") as img_file_obj:
-        img_data = img_file_obj.read()
-        img = Image.open(io.BytesIO(img_data))  # Ensure indentation matches the block
-        img.verify()
+# View and Download Uploaded Images
+if st.checkbox("🖼️ View and Download Uploaded Images"):
+    image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    if image_files:
+        for img_file in image_files:
+            img_path = os.path.join(PHOTOS_DIR, img_file)
+            try:
+                # Validate and display the image
+                with open(img_path, "rb") as img_file_obj:
+                    img_data = img_file_obj.read()
+                    img = Image.open(io.BytesIO(img_data))
+                    img.verify()
+                    
+                # Display the image on Streamlit
+                st.image(img_path, caption=img_file, use_container_width=True)
+                
+                # Provide a download button for the image
+                with open(img_path, "rb") as img:
+                    st.download_button(
+                        label=f"⬇️ Download {img_file}",
+                        data=img,
+                        file_name=img_file,
+                        mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
+                    )
+            except Exception as e:
+                st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
+    else:
+        st.warning("⚠️ No images found.")
 
-    # Display the image on Streamlit
-    st.image(img_path, caption=img_file, use_container_width=True)
-
-    # Provide a download button for the image
-    with open(img_path, "rb") as img:
+# View Past Submissions
+if st.checkbox("📄 View Past Submissions"):
+    files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
+    if files:
+        all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
+        st.dataframe(all_data)
+        
+        # Provide a download button for all responses
+        csv = all_data.to_csv(index=False).encode('utf-8')
         st.download_button(
-            label=f"⬇️ Download {img_file}",
-            data=img,
-            file_name=img_file,
-            mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
+            label="⬇️ Download All Responses",
+            data=csv,
+            file_name='all_survey_responses.csv',
+            mime='text/csv'
         )
-except Exception as e:
-    st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
-                    # Display the image
-                    st.image(img_path, caption=img_file, use_container_width=True)
-
-                    # Provide a download button for the image
-                    with open(img_path, "rb") as img:
-                        st.download_button(
-                            label=f"⬇️ Download {img_file}",
-                            data=img,
-                            file_name=img_file,
-                            mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
-                        )
-                except Exception as e:
-                    st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
-        else:
-            st.warning("⚠️ No images found.")
-
-    # View Past Submissions
-    if st.checkbox("📄 View Past Submissions"):
-        files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
-        if files:
-            all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
-            st.dataframe(all_data)
-            
-            # Provide a download button for all responses
-            csv = all_data.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="⬇️ Download All Responses",
-                data=csv,
-                file_name='all_survey_responses.csv',
-                mime='text/csv'
-            )
-        else:
-            st.warning("⚠️ No submissions found yet.")
-else:
-    if admin_email:
-        st.error("❌ Not an authorized admin.")
+    else:
+        st.warning("⚠️ No submissions found yet.")
