@@ -4,6 +4,7 @@ import datetime
 import os
 import io
 from PIL import Image
+
 # Set the directory to save responses
 SAVE_DIR = "responses"
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -602,6 +603,26 @@ if admin_email in ALLOWED_EMAILS:
                 img_path = os.path.join(PHOTOS_DIR, img_file)
                       img = Image.open("path_to_image.jpg")
                       img.show()  # To display the image
+                try:
+    # Validate the image file before displaying
+    with open(img_path, "rb") as img_file_obj:
+        img_data = img_file_obj.read()
+        img = Image.open(io.BytesIO(img_data))  # Ensure indentation matches the block
+        img.verify()
+
+    # Display the image on Streamlit
+    st.image(img_path, caption=img_file, use_container_width=True)
+
+    # Provide a download button for the image
+    with open(img_path, "rb") as img:
+        st.download_button(
+            label=f"⬇️ Download {img_file}",
+            data=img,
+            file_name=img_file,
+            mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
+        )
+except Exception as e:
+    st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
                     # Display the image
                     st.image(img_path, caption=img_file, use_container_width=True)
 
