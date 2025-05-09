@@ -529,16 +529,15 @@ if submitted:
             else:
                 # If all validations pass, save the data
                 now = datetime.datetime.now()
+# Map responses keys (question numbers) to their English labels
+data = {english_labels.get(k, k): v for k, v in responses.items()}
 
-               # Map responses keys (question numbers) to their English labels
-              data = {english_labels.get(k, k): v for k, v in responses.items()}
-                  # Create DataFrame and save as CSV
-                df = pd.DataFrame([data])
-                 now = datetime.datetime.now()
-                 filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-                 df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
-                st.success("✅ Survey Submitted and Saved!")
-
+# Create DataFrame and save as CSV
+df = pd.DataFrame([data])
+now = datetime.datetime.now()
+filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding='utf-8')
+st.success("✅ Survey Submitted and Saved!")
 
 st.divider()
 st.header("🔐 Admin Real-Time Access")
