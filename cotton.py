@@ -583,7 +583,10 @@ ALLOWED_EMAILS = [
 ]
 
 # Input for admin email
-admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
+admin_email = st.text_input(
+    "Enter your Admin Email to unlock extra features:",
+    key="admin_email_key"
+)
 
 if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
