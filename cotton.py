@@ -572,14 +572,6 @@ if submitted:
                         f.write(uploaded_photo.getbuffer())
                     st.success(f"Photo uploaded and saved as {uploaded_photo.name}.")
 
-                import pandas as pd
-files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
-for file in files:
-    df = pd.read_csv(os.path.join(SAVE_DIR, file))
-    if responses["1"] in df["Farmer Tracenet Code"].values:
-        st.error("You have already submitted this form.")
-        break
-else:
                 # Save responses as a CSV file
                 data = {labels.get(k, k): v for k, v in responses.items()}
                 now = datetime.datetime.now()
