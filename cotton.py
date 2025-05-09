@@ -561,6 +561,63 @@ if admin_email in ALLOWED_EMAILS:
 else:
     if admin_email:
         st.error("❌ Not an authorized admin.")
+        import os
+from PIL import Image
+import streamlit as st
+
+# Directory where images are saved
+PHOTOS_DIR = "photos"
+os.makedirs(PHOTOS_DIR, exist_ok=True)  # Ensure the directory exists
+
+# Admin Access Section
+st.header("🔐 Admin Real-Time Access")
+
+# List of allowed admin emails
+ALLOWED_EMAILS = [
+    "shifalis@tns.org", 
+    "rmukherjee@tns.org", 
+    "rsomanchi@tns.org", 
+    "mkaushal@tns.org", 
+    "bkharoo@tns.org", 
+    "rladdha@tns.org"
+]
+
+# Input for admin email
+admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
+
+if admin_email in ALLOWED_EMAILS:
+    st.success("✅ Admin access granted! Real-time view enabled.")
+
+    # Add image access for admin
+    if st.checkbox("🖼️ View and Download Uploaded Images"):
+        # List all image files in the PHOTOS_DIR folder
+        image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+
+        if image_files:
+            for img_file in image_files:
+                img_path = os.path.join(PHOTOS_DIR, img_file)
+
+                try:
+                    # Validate and display the image using PIL
+                    with open(img_path, "rb") as f:
+                        img = Image.open(f)
+                        st.image(img, caption=img_file, use_container_width=True)
+
+                    # Provide download button for the image
+                    with open(img_path, "rb") as img:
+                        st.download_button(
+                            label=f"⬇️ Download {img_file}",
+                            data=img,
+                            file_name=img_file,
+                            mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
+                        )
+                except Exception as e:
+                    st.error(f"Error loading image {img_file}: {e}")
+        else:
+            st.warning("⚠️ No images found.")
+else:
+    if admin_email:
+        st.error("❌ Not an authorized admin.")
 
 if st.checkbox("📄 View Past Submissions"):
     files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
