@@ -587,22 +587,7 @@ else:
                 df = pd.DataFrame([data])
                 df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
                 st.success("✅ Survey Submitted and Saved!")
-    # Check for duplicate submissions
-files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
-duplicate_found = False
-
-# Iterate over all CSV files in the responses directory
-for file in files:
-    df = pd.read_csv(os.path.join(SAVE_DIR, file))
-    
-    # Debugging: Print available columns in the DataFrame
-    st.write(f"Columns in {file}: {list(df.columns)}")  # This will help identify the actual column names
-    
-    # Check if the "Farmer Tracenet Code" column exists
-    if "Farmer Tracenet Code" not in df.columns:
-        st.warning(f"The required column 'Farmer Tracenet Code' is missing in {file}. Skipping this file.")
-        continue  # Skip to the next file if the column is missing
-
+   
 for file in files:
     df = pd.read_csv(os.path.join(SAVE_DIR, file))
     
