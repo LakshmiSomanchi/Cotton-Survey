@@ -497,7 +497,6 @@ if st.checkbox("🖼️ View and Download Uploaded Images"):
             img_path = os.path.join(PHOTOS_DIR, img_file)
             
    try:
-    # Display image with error handling
     st.image(img_path, caption=img_file, use_column_width=True)
 except Exception as e:
     st.error(f"Error displaying image {img_file}: {e}")
