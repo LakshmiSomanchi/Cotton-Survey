@@ -591,15 +591,15 @@ admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
 if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
 
-    # View and Download Uploaded Images
-    if st.checkbox("🖼️ View and Download Uploaded Images"):
-        image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-        if image_files:
-            for img_file in image_files:
-                img_path = os.path.join(PHOTOS_DIR, img_file)
-                
+ # Admin access: View and Download Uploaded Images
+if st.checkbox("🖼️ View and Download Uploaded Images"):
+    image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+    if image_files:
+        for img_file in image_files:
+            img_path = os.path.join(PHOTOS_DIR, img_file)
+            try:
                 # Display the image
-                st.image(img_path, caption=img_file, use_column_width=True)
+                st.image(img_path, caption=img_file, use_container_width=True)
                 
                 # Provide a download button for the image
                 with open(img_path, "rb") as img:
@@ -609,8 +609,11 @@ if admin_email in ALLOWED_EMAILS:
                         file_name=img_file,
                         mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
                     )
-        else:
-            st.warning("⚠️ No images found.")
+            except Exception as e:
+                # Handle invalid image files
+                st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
+    else:
+        st.warning("⚠️ No images found.")
 
     # View Past Submissions
     if st.checkbox("📄 View Past Submissions"):
