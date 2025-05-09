@@ -487,15 +487,22 @@ if submitted:
 PHOTOS_DIR = "photos"
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 
-# Add photo upload functionality in the form
+import base64
+
 uploaded_file = st.file_uploader("Upload a photo of your farm or crops", type=["jpg", "jpeg", "png"], key="uploaded_photo")
 if uploaded_file is not None:
     # Save the photo permanently
     photo_path = os.path.join(PHOTOS_DIR, uploaded_file.name)
     with open(photo_path, "wb") as f:
-        shutil.copyfileobj(uploaded_file, f)
-    st.success(f"✅ Photo saved as: {uploaded_file.name}")
-    responses["uploaded_photo"] = uploaded_file.name  # Save filename in responses
+        f.write(uploaded_file.getbuffer())
+    st.success(f"✅ Photo saved: {photo_path}")
+
+    # Encode the image as Base64
+    with open(photo_path, "rb") as img_file:
+        base64_string = base64.b64encode(img_file.read()).decode('utf-8')
+    
+    # Save the Base64 string in responses
+    responses["uploaded_photo"] = base64_string
         
 responses["3"] = st.text_input("Mobile no.", max_chars=10)  # Assuming "3" is the key for phone number
 
