@@ -601,8 +601,8 @@ if admin_email in ALLOWED_EMAILS:
         if image_files:
             for img_file in image_files:
                 img_path = os.path.join(PHOTOS_DIR, img_file)
-                      img = Image.open("path_to_image.jpg")
-                      img.show()  # To display the image
+                img = Image.open("path_to_image.jpg")
+                img.show()  # To display the image
                 try:
     # Validate the image file before displaying
     with open(img_path, "rb") as img_file_obj:
