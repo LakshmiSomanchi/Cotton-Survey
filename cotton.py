@@ -590,16 +590,18 @@ else:
     # Check for duplicate submissions
 files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
 duplicate_found = False
+
+# Iterate over all CSV files in the responses directory
 for file in files:
     df = pd.read_csv(os.path.join(SAVE_DIR, file))
     
-    # Debug column names
-    print(df.columns)  # Debugging step to see available columns
+    # Debugging: Print available columns in the DataFrame
+    st.write(f"Columns in {file}: {list(df.columns)}")  # This will help identify the actual column names
     
-    # Check if the required column exists
+    # Check if the "Farmer Tracenet Code" column exists
     if "Farmer Tracenet Code" not in df.columns:
-        st.error(f"The required column 'Farmer Tracenet Code' is missing in {file}.")
-        continue
+        st.warning(f"The required column 'Farmer Tracenet Code' is missing in {file}. Skipping this file.")
+        continue  # Skip to the next file if the column is missing
 
     # Check for duplicate entries
     if responses["1"] in df["Farmer Tracenet Code"].values:
@@ -608,6 +610,16 @@ for file in files:
         break
 
 if not duplicate_found:
+    # Save the uploaded photo (if available)
+    if uploaded_photo:
+        photo_path = os.path.join(PHOTOS_DIR, uploaded_photo.name)
+        try:
+            with open(photo_path, "wb") as f:
+                f.write(uploaded_photo.getbuffer())
+            st.success(f"Photo uploaded and saved as {uploaded_photo.name}.")
+        except Exception as e:
+            st.error(f"Error saving photo: {e}")
+
     # Save responses as a CSV file
     data = {labels.get(k, k): v for k, v in responses.items()}
     now = datetime.datetime.now()
