@@ -579,3 +579,56 @@ if submitted:
                 df = pd.DataFrame([data])
                 df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
                 st.success("✅ Survey Submitted and Saved!")
+
+# Admin Real-Time Access
+st.divider()
+st.header("🔐 Admin Real-Time Access")
+
+# Allowed Admin Emails
+ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org", "rsomanchi@tns.org", "mkaushal@tns.org"]
+admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
+
+if admin_email in ALLOWED_EMAILS:
+    st.success("✅ Admin access granted! Real-time view enabled.")
+
+    # View and Download Uploaded Images
+    if st.checkbox("🖼️ View and Download Uploaded Images"):
+        image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        if image_files:
+            for img_file in image_files:
+                img_path = os.path.join(PHOTOS_DIR, img_file)
+                
+                # Display the image
+                st.image(img_path, caption=img_file, use_column_width=True)
+                
+                # Provide a download button for the image
+                with open(img_path, "rb") as img:
+                    st.download_button(
+                        label=f"⬇️ Download {img_file}",
+                        data=img,
+                        file_name=img_file,
+                        mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
+                    )
+        else:
+            st.warning("⚠️ No images found.")
+
+    # View Past Submissions
+    if st.checkbox("📄 View Past Submissions"):
+        files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
+        if files:
+            all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
+            st.dataframe(all_data)
+            
+            # Provide a download button for all responses
+            csv = all_data.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="⬇️ Download All Responses",
+                data=csv,
+                file_name='all_survey_responses.csv',
+                mime='text/csv'
+            )
+        else:
+            st.warning("⚠️ No submissions found yet.")
+else:
+    if admin_email:
+        st.error("❌ Not an authorized admin.")
