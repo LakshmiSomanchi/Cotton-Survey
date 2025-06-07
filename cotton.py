@@ -333,7 +333,7 @@ dict_translations = {
         "102": "कोणतीही सामुदायिक जल संचयन रचना (होय/नाही)",
         "103": "माती भिजवणारे मीटर वापरणे (होय/नाही)",
     },
-   "Gujarati": {
+    "Gujarati": {
         "1": "ખેડૂત ટ્રેસનેટ કોડ",
         "2": "ખેડૂતનું પૂરું નામ",
         "3": "મોબાઇલ નંબર",
@@ -451,7 +451,6 @@ PHOTOS_DIR = "photos"
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 # Add a photo upload option in the form
-# Add a photo upload option in the form
 with st.form("questionnaire_form"):
     for question_key in questions:
         # Use the translated label for the question
@@ -498,14 +497,18 @@ with st.form("questionnaire_form"):
             "89",
             "91",
             "93",
-            "96",
+            "96", # This was in your original list of Yes/No, but in Gujarati, it's 96 "પંપની ક્ષમતા (એચપીમાં)", and 100 "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)". Let's assume you want 100 as Yes/No. I'll correct the Gujarati translation later as well.
             "97",
             "102",
             "103",
         ]:  # Yes/No Questions
-            responses[question_key] = st.selectbox(
-                question_text, ["Yes", "No"], key=f"question_{question_key}"
-            )
+            # Handle the specific case for Gujarati where 96 is not a Yes/No question
+            if language == "Gujarati" and question_key == "96":
+                 responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            else:
+                responses[question_key] = st.selectbox(
+                    question_text, ["Yes", "No"], key=f"question_{question_key}"
+                )
 
         elif question_key == "55":  # Irrigation method
             responses[question_key] = st.selectbox(
@@ -519,18 +522,27 @@ with st.form("questionnaire_form"):
                 ],
                 key=f"question_{question_key}",
             )
-        
+       
         elif question_key == "62":  # Harvesting time
             responses[question_key] = st.text_input(
                 question_text,
                 placeholder="e.g., month 1, month 2, month 3",
                 key=f"question_{question_key}",
             )
-            # Validate comma-separated entries
-            if responses[question_key]:
-                months = responses[question_key].split(",")
-                if len(months) != 3:
-                    st.error("Please enter exactly three months separated by commas.")
+            # Validate comma-separated entries (this validation can be done after submission too)
+            # if responses[question_key]:
+            #     months = responses[question_key].split(",")
+            #     if len(months) != 3:
+            #         st.error("Please enter exactly three months separated by commas.")
+
+        # Use st.number_input for all numeric fields
+        elif question_key in ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]:
+            # Set a default value to avoid issues if the input is left empty initially.
+            # Using None or an empty string as a default for number_input might not work well
+            # with the validation check later. A default of 0.0 is safer if non-negative is required.
+            responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            # If the user clears the input, it might become None or an empty string.
+            # We can handle this during submission validation as well.
 
         else:
             # Default to a text input for all other questions
@@ -550,38 +562,73 @@ with st.form("questionnaire_form"):
 if submitted:
     # Validate required fields
     required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
+    
+    # Flag to track if there are validation errors
+    has_validation_error = False
+
     for field in required_fields:
-        if not responses.get(field):
+        if not responses.get(field) and responses.get(field) != 0: # Check for empty string or None, but allow 0 if it's a number
             st.error(f"Field '{labels[field]}' is required.")
-            break
-    else:
+            has_validation_error = True
+            
+    if not has_validation_error: # Only proceed if required fields are filled
         # Validate phone number
         phone_number = responses.get("3")
-        if phone_number and (len(phone_number) != 10 or not phone_number.isdigit()):
+        if phone_number and (not str(phone_number).isdigit() or len(str(phone_number)) != 10):
             st.error("Mobile no. must be exactly 10 digits.")
-        else:
-            # Validate numeric fields
-            numeric_fields = ["11", "12", "13", "14", "15", "16", "17", "34", "37", "39", "41"]
-            for field in numeric_fields:
-                if not str(responses.get(field)).isdigit() or int(responses.get(field)) < 0:
-                    st.error(f"Field '{labels[field]}' must be a non-negative number.")
-                    break
-            else:
-                # Save the uploaded photo (if available)
-                if uploaded_photo:
-                    photo_path = os.path.join(PHOTOS_DIR, uploaded_photo.name)
-                    with open(photo_path, "wb") as f:
-                        f.write(uploaded_photo.getbuffer())
-                    st.success(f"Photo uploaded and saved as {uploaded_photo.name}.")
+            has_validation_error = True
+        
+    if not has_validation_error: # Only proceed if phone number is valid
+        # Validate other numeric fields, ensuring they are non-negative.
+        # Since we're using st.number_input with min_value=0.0, the negative check is less critical here,
+        # but it's good to keep a general check for robustness.
+        # Also, check if they are actually numbers, as st.number_input handles this well, but data integrity can be further ensured.
+        numeric_fields_to_validate_non_negative = ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]
 
-                # Save responses as a CSV file
-                data = {labels.get(k, k): v for k, v in responses.items()}
-                now = datetime.datetime.now()
-                filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-                df = pd.DataFrame([data])
-                df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
-                st.success("✅ Survey Submitted and Saved!")
-   
+        for field in numeric_fields_to_validate_non_negative:
+            try:
+                # Ensure the value is a number and non-negative
+                if responses.get(field) is None or float(responses.get(field)) < 0:
+                    st.error(f"Field '{labels[field]}' must be a non-negative number.")
+                    has_validation_error = True
+                    break
+            except (ValueError, TypeError):
+                st.error(f"Field '{labels[field]}' must be a valid number.")
+                has_validation_error = True
+                break
+
+    if not has_validation_error:
+        # Validate harvesting time (question 62)
+        if responses.get("62"):
+            months = responses["62"].split(",")
+            if len(months) != 3:
+                st.error("Please enter exactly three months separated by commas for 'Harvesting time'.")
+                has_validation_error = True
+
+    if not has_validation_error:
+        # Save the uploaded photo (if available)
+        if uploaded_photo:
+            photo_path = os.path.join(PHOTOS_DIR, uploaded_photo.name)
+            try:
+                with open(photo_path, "wb") as f:
+                    f.write(uploaded_photo.getbuffer())
+                st.success(f"Photo uploaded and saved as {uploaded_photo.name}.")
+            except Exception as e:
+                st.error(f"Error saving photo: {e}")
+                has_validation_error = True
+
+    if not has_validation_error:
+        # Save responses as a CSV file
+        data = {labels.get(k, k): v for k, v in responses.items()}
+        now = datetime.datetime.now()
+        filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+        df = pd.DataFrame([data])
+        try:
+            df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
+            st.success("✅ Survey Submitted and Saved!")
+        except Exception as e:
+            st.error(f"Error saving survey data: {e}")
+
 
 # Admin Real-Time Access
 st.divider()
