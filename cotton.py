@@ -4,6 +4,7 @@ import datetime
 import os
 import io
 from PIL import Image
+import zipfile # Import the zipfile module
 
 # Set the directory to save responses
 SAVE_DIR = "responses"
@@ -430,7 +431,7 @@ dict_translations = {
         "95": "કામદારને ચૂકવણીની પદ્ધતિ (રોકડા/ઓનલાઇન)",
         "96": "પંપની ક્ષમતા (એચપીમાં)",
         "97": "બફર ઝોન જાળવવું (હા/ના)",
-        "98": "પાકના અવશેષોનો ઉપયોગ (ઇંધન/જનાવરોનું ખોરાક/બાયોચાર/ઇન-સિટુ કમ્પોસ્ટિંગ/જળાવવું)",
+        "98": "પાકના અવશેષોનો ઉપયોગ (ઇંધન/જનાવરોનું ખોરાક/બાયોચાર/ઇન-સિટુ કમ્પોસ્ટिंग/જળાવવું)",
         "99": "કામદારોને ચુકવણીની રીત (રોમ/ઓનલાઇન)",
         "100": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)",
         "101": "પરિવારના કેટલી મહિલાઓ ખેતીકાર્ય સાથે જોડાયેલ છે",
@@ -497,14 +498,19 @@ with st.form("questionnaire_form"):
             "89",
             "91",
             "93",
-            "96", # This was in your original list of Yes/No, but in Gujarati, it's 96 "પંપની ક્ષમતા (એચપીમાં)", and 100 "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)". Let's assume you want 100 as Yes/No. I'll correct the Gujarati translation later as well.
-            "97",
+            "97", # This was 96 in your original list, but in Gujarati, it's 96 "પંપની ક્ષમતા (એચપીમાં)", and 100 "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)". We'll use 100 for "Any wage difference..." in the Yes/No list.
+            "100", # Added question 100 for Yes/No based on Gujarati translation
             "102",
             "103",
         ]:  # Yes/No Questions
-            # Handle the specific case for Gujarati where 96 is not a Yes/No question
-            if language == "Gujarati" and question_key == "96":
-                 responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            # Handle the specific case for Gujarati where 96 is not a Yes/No question, and 100 is.
+            if language == "Gujarati":
+                if question_key == "96":
+                    responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+                elif question_key == "100":
+                    responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
+                else:
+                    responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
             else:
                 responses[question_key] = st.selectbox(
                     question_text, ["Yes", "No"], key=f"question_{question_key}"
@@ -522,7 +528,7 @@ with st.form("questionnaire_form"):
                 ],
                 key=f"question_{question_key}",
             )
-       
+        
         elif question_key == "62":  # Harvesting time
             responses[question_key] = st.text_input(
                 question_text,
@@ -531,9 +537,9 @@ with st.form("questionnaire_form"):
             )
             # Validate comma-separated entries (this validation can be done after submission too)
             # if responses[question_key]:
-            #     months = responses[question_key].split(",")
-            #     if len(months) != 3:
-            #         st.error("Please enter exactly three months separated by commas.")
+            #    months = responses[question_key].split(",")
+            #    if len(months) != 3:
+            #        st.error("Please enter exactly three months separated by commas.")
 
         # Use st.number_input for all numeric fields
         elif question_key in ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]:
@@ -641,50 +647,72 @@ admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
 if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
 
-
-# View and Download Uploaded Images
-if st.checkbox("🖼️ View and Download Uploaded Images"):
-    image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-    if image_files:
-        for img_file in image_files:
-            img_path = os.path.join(PHOTOS_DIR, img_file)
-            try:
-                # Validate and display the image
-                with open(img_path, "rb") as img_file_obj:
-                    img_data = img_file_obj.read()
-                    img = Image.open(io.BytesIO(img_data))
-                    img.verify()
+    # View and Download Uploaded Images
+    if st.checkbox("🖼️ View and Download Uploaded Images"):
+        image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        if image_files:
+            for img_file in image_files:
+                img_path = os.path.join(PHOTOS_DIR, img_file)
+                try:
+                    # Validate and display the image
+                    with open(img_path, "rb") as img_file_obj:
+                        img_data = img_file_obj.read()
+                        img = Image.open(io.BytesIO(img_data))
+                        img.verify()
+                        
+                    # Display the image on Streamlit
+                    st.image(img_path, caption=img_file, use_container_width=True)
                     
-                # Display the image on Streamlit
-                st.image(img_path, caption=img_file, use_container_width=True)
-                
-                # Provide a download button for the image
-                with open(img_path, "rb") as img:
-                    st.download_button(
-                        label=f"⬇️ Download {img_file}",
-                        data=img,
-                        file_name=img_file,
-                        mime="image/jpeg" if img_file.lower().endswith('.jpg') else "image/png"
-                    )
-            except Exception as e:
-                st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
-    else:
-        st.warning("⚠️ No images found.")
+                    # Provide a download button for the image
+                    with open(img_path, "rb") as img:
+                        st.download_button(
+                            label=f"⬇️ Download {img_file}",
+                            data=img,
+                            file_name=img_file,
+                            mime="image/jpeg" if img_file.lower().endswith(('.jpg', '.jpeg')) else "image/png",
+                            key=f"download_{img_file}" # Added a unique key for each download button
+                        )
+                except Exception as e:
+                    st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
 
-# View Past Submissions
-if st.checkbox("📄 View Past Submissions"):
-    files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
-    if files:
-        all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
-        st.dataframe(all_data)
-        
-        # Provide a download button for all responses
-        csv = all_data.to_csv(index=False).encode('utf-8')
-        st.download_button(
-            label="⬇️ Download All Responses",
-            data=csv,
-            file_name='all_survey_responses.csv',
-            mime='text/csv'
-        )
-    else:
-        st.warning("⚠️ No submissions found yet.")
+            # --- Download All Photos Button ---
+            if image_files:
+                st.markdown("---")
+                st.subheader("Download All Photos")
+                
+                # Create a BytesIO object to store the zip file in memory
+                zip_buffer = io.BytesIO()
+                with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+                    for img_file in image_files:
+                        img_path = os.path.join(PHOTOS_DIR, img_file)
+                        zip_file.write(img_path, os.path.basename(img_path))
+                
+                # Reset buffer position to the beginning
+                zip_buffer.seek(0)
+                
+                st.download_button(
+                    label="⬇️ Download All Photos as ZIP",
+                    data=zip_buffer,
+                    file_name="all_photos.zip",
+                    mime="application/zip",
+                )
+        else:
+            st.warning("⚠️ No images found.")
+
+    # View Past Submissions
+    if st.checkbox("📄 View Past Submissions"):
+        files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
+        if files:
+            all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
+            st.dataframe(all_data)
+            
+            # Provide a download button for all responses
+            csv = all_data.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="⬇️ Download All Responses",
+                data=csv,
+                file_name='all_survey_responses.csv',
+                mime='text/csv'
+            )
+        else:
+            st.warning("⚠️ No submissions found yet.")
