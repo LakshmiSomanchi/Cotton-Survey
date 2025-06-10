@@ -387,8 +387,8 @@ dict_translations = {
         "50": "ખર્ચ પ્રતિ પીળો સ્ટીકી ટ્રેપ",
         "51": "ખર્ચ પ્રતિ વાદળી સ્ટીકી ટ્રેપ",
         "52": "પક્ષી સ્ટેન્ડનો ઉપયોગ પ્રતિ એકર",
-        "53": "સિંચાઈ ખર્ચ/એકર",
-        "54": "સિંચાઈ ખર્ચ/એકર",
+        "53": "સિંચાઈ ખર્ચ/एकर",
+        "54": "સિંચાઈ ખર્ચ/एकर",
         "55": "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા",
         "56": "વપરાયેલી સિંચાઈ પદ્ધતિ",
         "57": "કોઈપણ ખેતી મશીનરી ભાડે લીધી છે (હા/ના)",
@@ -431,7 +431,7 @@ dict_translations = {
         "95": "કામદારને ચૂકવણીની પદ્ધતિ (રોકડા/ઓનલાઇન)",
         "96": "પંપની ક્ષમતા (એચપીમાં)",
         "97": "બફર ઝોન જાળવવું (હા/ના)",
-        "98": "પાકના અવશેષોનો ઉપયોગ (ઇંધન/જનાવરોનું ખોરાક/બાયોચાર/ઇન-સિટુ કમ્પોસ્ટिंग/જળાવવું)",
+        "98": "પાકના અવશેષોનો ઉપયોગ (ઇંધન/જનાવરોનું ખોરાક/બાયોચાર/ઇન-સિટુ કમ્પોસ્ટિંગ/જળાવવું)",
         "99": "કામદારોને ચુકવણીની રીત (રોમ/ઓનલાઇન)",
         "100": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)",
         "101": "પરિવારના કેટલી મહિલાઓ ખેતીકાર્ય સાથે જોડાયેલ છે",
@@ -453,6 +453,20 @@ os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 # Add a photo upload option in the form
 with st.form("questionnaire_form"):
+    # Add surveyor name input at the beginning of the form
+    surveyor_name_label = ""
+    if language == "English":
+        surveyor_name_label = "Surveyor Name"
+    elif language == "Hindi":
+        surveyor_name_label = "सर्वेयर का नाम"
+    elif language == "Marathi":
+        surveyor_name_label = "सर्वेयरचे नाव"
+    elif language == "Gujarati":
+        surveyor_name_label = "સર્વેયરનું નામ"
+
+    responses["surveyor_name"] = st.text_input(surveyor_name_label, key="surveyor_name_input")
+
+
     for question_key in questions:
         # Use the translated label for the question
         question_text = labels.get(
@@ -498,8 +512,8 @@ with st.form("questionnaire_form"):
             "89",
             "91",
             "93",
-            "97", # This was 96 in your original list, but in Gujarati, it's 96 "પંપની ક્ષમતા (એચપીમાં)", and 100 "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)". We'll use 100 for "Any wage difference..." in the Yes/No list.
-            "100", # Added question 100 for Yes/No based on Gujarati translation
+            "97",
+            "100",
             "102",
             "103",
         ]:  # Yes/No Questions
@@ -566,6 +580,11 @@ with st.form("questionnaire_form"):
 
 # Handle the uploaded photo
 if submitted:
+    # Validate surveyor name
+    if not responses.get("surveyor_name"):
+        st.error("Surveyor Name is required.")
+        has_validation_error = True
+
     # Validate required fields
     required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
     
@@ -626,6 +645,8 @@ if submitted:
     if not has_validation_error:
         # Save responses as a CSV file
         data = {labels.get(k, k): v for k, v in responses.items()}
+        # Add surveyor name to the data dictionary with its specific key
+        data["Surveyor Name"] = responses.get("surveyor_name")
         now = datetime.datetime.now()
         filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
         df = pd.DataFrame([data])
