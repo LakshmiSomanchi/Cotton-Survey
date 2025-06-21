@@ -387,8 +387,8 @@ dict_translations = {
         "50": "ખર્ચ પ્રતિ પીળો સ્ટીકી ટ્રેપ",
         "51": "ખર્ચ પ્રતિ વાદળી સ્ટીકી ટ્રેપ",
         "52": "પક્ષી સ્ટેન્ડનો ઉપયોગ પ્રતિ એકર",
-        "53": "સિંચાઈ ખર્ચ/एकर",
-        "54": "સિંચાઈ ખર્ચ/एकर",
+        "53": "સિંચાઈ ખર્ચ/એકર",
+        "54": "સિંચાઈ ખર્ચ/એકર",
         "55": "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા",
         "56": "વપરાયેલી સિંચાઈ પદ્ધતિ",
         "57": "કોઈપણ ખેતી મશીનરી ભાડે લીધી છે (હા/ના)",
@@ -432,7 +432,7 @@ dict_translations = {
         "95": "કામદારને ચૂકવણીની પદ્ધતિ (રોકડા/ઓનલાઇન)",
         "96": "પંપની ક્ષમતા (એચપીમાં)",
         "97": "બફર ઝોન જાળવવું (હા/ના)",
-        "98": "પાકના અવશેષોનો ઉપયોગ (ઇંધન/જનાવરોનું ખોરાક/બાયોચાર/ઇન-સિટુ કમ્પોસ્ટિંગ/જળાવવું)",
+        "98": "પાકના અવશેષોનો ઉપયોગ (ઇંધન/જનાવરોનું ખોરાક/બાયોચાર/ઇન-સિટુ કમ્પોસ્ટिंग/જળાવવું)",
         "99": "કામદારોને ચુકવણીની રીત (રોમ/ઓનલાઇન)",
         "100": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)",
         "101": "પરિવારના કેટલી મહિલાઓ ખેતીકાર્ય સાથે જોડાયેલ છે",
@@ -543,7 +543,7 @@ with st.form("questionnaire_form"):
                 ],
                 key=f"question_{question_key}",
             )
-        
+            
         elif question_key == "62":  # Harvesting time
             responses[question_key] = st.text_input(
                 question_text,
@@ -644,10 +644,16 @@ if submitted:
                 has_validation_error = True
 
     if not has_validation_error:
+        # Get the current timestamp
+        current_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        
         # Save responses as a CSV file
         data = {labels.get(k, k): v for k, v in responses.items()}
         # Add surveyor name to the data dictionary with its specific key
         data["Surveyor Name"] = responses.get("surveyor_name")
+        # Add the timestamp to the data
+        data["Submission Timestamp"] = current_timestamp
+
         now = datetime.datetime.now()
         filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
         df = pd.DataFrame([data])
