@@ -5,6 +5,7 @@ import os
 import io
 from PIL import Image
 import zipfile # Import the zipfile module
+import streamlit.components.v1 as components # Import components for custom HTML/JS
 
 # Set the directory to save responses
 SAVE_DIR = "responses"
@@ -12,6 +13,54 @@ os.makedirs(SAVE_DIR, exist_ok=True)
 
 st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
 st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
+
+# --- Geolocation Component (NEW) ---
+# Define the HTML and JavaScript for getting location
+geolocation_js = """
+<script>
+    function getLocation() {
+        if (navigator.geolocation) {
+            navigator.geolocation.getCurrentPosition(sendPositionToStreamlit, showError, {
+                enableHighAccuracy: true,
+                timeout: 5000,
+                maximumAge: 0
+            });
+        } else {
+            Streamlit.setComponentValue("Geolocation is not supported by this browser.");
+        }
+    }
+
+    function sendPositionToStreamlit(position) {
+        const lat = position.coords.latitude;
+        const lon = position.coords.longitude;
+        Streamlit.setComponentValue(`Latitude: ${lat}, Longitude: ${lon}`);
+    }
+
+    function showError(error) {
+        let errorMessage = "";
+        switch(error.code) {
+            case error.PERMISSION_DENIED:
+                errorMessage = "User denied the request for Geolocation.";
+                break;
+            case error.POSITION_UNAVAILABLE:
+                errorMessage = "Location information is unavailable.";
+                break;
+            case error.TIMEOUT:
+                errorMessage = "The request to get user location timed out.";
+                break;
+            case error.UNKNOWN_ERROR:
+                errorMessage = "An unknown error occurred.";
+                break;
+        }
+        Streamlit.setComponentValue(`Error: ${errorMessage}`);
+    }
+
+    // Call getLocation when the component is loaded
+    window.onload = getLocation;
+</script>
+"""
+# --- End Geolocation Component ---
+
 
 language = st.selectbox(
     "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
@@ -357,7 +406,7 @@ dict_translations = {
         "20": "બિન-ઓર્ગેનિક કપાસની જમીન (એકરમાં)",
         "21": "ઓર્ગેનિક કપાસની જમીન (એકરમાં)",
         "22": "ઓર્ગનીક કપાસની ખેતી કેટલા વર્ષથી કરો છો",
-        "23": "સર્ટિફિકેસન સ્ટેટસ  (સર્ટિફાઇડ/IC-1,2,3)",
+        "23": "સર્ટિફિકેસન સ્ટેટસ  (સર્ટિફાઇડ/IC-1,2,3)",
         "24": "સિંચાઈનો સ્ત્રોત",
         "25": "ખેતીલાયક વિસ્તાર (એકર)",
         "26": "ઢોરની સંખ્યા (ગાય અને ભેંસ)",
@@ -365,7 +414,7 @@ dict_translations = {
         "28": "પસંદગીનું વેચાણ સ્થળ (એગ્રીગેટર/સુમિન્ટર/એપીએમસી/અન્ય જીન)",
         "29": "વીણી કરેલા કપાસના સંગ્રહ માટે જગીયા છે",
         "30": "કોઈ પણ ખેતી સંબધિત સલાહ મળે છે",
-        "31": "શું ઓર્ગેનિક કપાસ માટેની શ્રેષ્ઠ પદ્ધતિ  પર કોઈ તાલીમ મળી છે",
+        "31": "શું ઓર્ગેનિક કપાસ માટેની શ્રેષ્ઠ પદ્ધતિ  પર કોઈ તાલીમ મળી છે",
         "32": "એફપીઓ/એફપીસી/એસએચજીમાં સભ્યપદ ધરાવો છો",
         "33": "રેકોર્ડ રાખવા માટે કોઈ ડાયરી અથવા રજિસ્ટર જાળવો છો",
         "34": "વાર્ષિક ઘરગથ્થુ આવક (રૂપિયામાં)",
@@ -413,13 +462,13 @@ dict_translations = {
         "76": "વપરાયેલા મલ્ચિંગનો પ્રકાર (જૈવ-પ્લાસ્ટિક/લીલો/સૂકો)",
         "77": "સંગ્રહ દરમિયાન શું સાવચેતીઓ રાખો છો",
         "78": "વીણી કરેલા કપાસના પરિવહન માટે ભાડે લીધેલ વાહન વપરાય છે (હા/ના)",
-        "79": "પરિવહન ખર્ચ  રૂપિયા/કિલો",
+        "79": "પરિવહન ખર્ચ  રૂપિયા/કિલો",
         "80": "દૂષણ/અશુદ્ધિઓને કારણે કોઈપણ જથ્થાનો અસ્વીકાર (કિલો)",
         "81": "કપાસના ભાવ જાણવાની ની રીત",
-        "82": "ચુકવણી વ્યવહારનો  પ્રકાર (રોકડા/ઓનલાઇન)",
+        "82": "ચુકવણી વ્યવહારનો  પ્રકાર (રોકડા/ઓનલાઇન)",
         "83": "વેચાણ કર્યા પછી કેટલા દિવસોમાં રૂપીયા મળે છે",
-        "84": "કોઈપણ સરકારી યોજના અથવા સબસીડીનો લાભ મળે છે  (હા/ના)",
-        "85": "પાક વીમો ઉતારો છો  (હા/ના)",
+        "84": "કોઈપણ સરકારી યોજના અથવા સબસીડીનો લાભ મળે છે  (હા/ના)",
+        "85": "પાક વીમો ઉતારો છો  (હા/ના)",
         "86": "કોઈપણ સરકારી યોજના અથવા અનુદાન લાભો મેળવવા (હા/ના)",
         "87": "કિશાન ક્રેડિટ કાર્ડ છે (હા/ના)",
         "88": "દર એકર પાક વીમાનો ખર્ચ",
@@ -427,7 +476,7 @@ dict_translations = {
         "90": "પાક ફેરબદલી માટે વપરાતા પાક",
         "91": "બૅંકમાંથી કોઈપણ કૃષિ લોન (હા/ના)",
         "92": "કૂવા કે બોરવેલના પંકીની ક્ષમતા (એચપીમાં)",
-        "93": "બફર ઝોન જાળવો છો  (હા/ના)",
+        "93": "બફર ઝોન જાળવો છો  (હા/ના)",
         "94": "પાકના અવશેષોનો ઉપયોગ (બળતણ/પશુઓનો ખોરાક/બાયોચાર/જમીનમાં ભેળવવું/સળગાવવું/કંપોસ્ટ)",
         "95": "કામદારને ચૂકવણીની પદ્ધતિ (રોકડા/ઓનલાઇન)",
         "96": "પંપની ક્ષમતા (એચપીમાં)",
@@ -467,6 +516,46 @@ with st.form("questionnaire_form"):
 
     responses["surveyor_name"] = st.text_input(surveyor_name_label, key="surveyor_name_input")
 
+    # --- Display and Capture Location (NEW) ---
+    st.subheader("Current Location")
+    # Use st.empty to create a placeholder that can be updated by the component
+    location_placeholder = st.empty()
+    # Embed the HTML component. The returned value will be the message from JavaScript.
+    # The key is important to ensure the component is re-rendered correctly.
+    location_data = components.html(
+        f"""
+        <script src="https://unpkg.com/streamlit-component-lib@1.3.0/dist/streamlit-component-lib.js"></script>
+        {geolocation_js}
+        <div id="location_display">Getting location...</div>
+        <script>
+            // This script waits for the Streamlit component to be ready
+            // and then calls the getLocation function.
+            // It also ensures the display div is updated by the JavaScript.
+            window.addEventListener('message', event => {
+                if (event.data.type === 'streamlit:rendered') {
+                    // This is a workaround as Streamlit's `components.html` doesn't
+                    // directly expose a way to trigger JS functions from Python
+                    // without re-rendering the entire component.
+                    // The `onload` in `geolocation_js` handles the initial call.
+                    // The `Streamlit.setComponentValue` is crucial for sending data back.
+                }
+            });
+        </script>
+        """,
+        height=0, # Set height to 0 as we only need the JS to run
+        width=0, # Set width to 0 as we only need the JS to run
+        scrolling=False,
+        # A unique key is important here, otherwise the component might not re-run on every refresh
+        key="geolocation_component"
+    )
+
+    if location_data:
+        location_placeholder.write(f"**Location:** {location_data}")
+        responses["current_location"] = location_data
+    else:
+        location_placeholder.write("Requesting location...")
+        responses["current_location"] = "Location not obtained"
+    # --- End Display and Capture Location (NEW) ---
 
     for question_key in questions:
         # Use the translated label for the question
@@ -552,9 +641,9 @@ with st.form("questionnaire_form"):
             )
             # Validate comma-separated entries (this validation can be done after submission too)
             # if responses[question_key]:
-            #    months = responses[question_key].split(",")
-            #    if len(months) != 3:
-            #        st.error("Please enter exactly three months separated by commas.")
+            #   months = responses[question_key].split(",")
+            #   if len(months) != 3:
+            #       st.error("Please enter exactly three months separated by commas.")
 
         # Use st.number_input for all numeric fields
         elif question_key in ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]:
@@ -653,6 +742,9 @@ if submitted:
         data["Surveyor Name"] = responses.get("surveyor_name")
         # Add the timestamp to the data
         data["Submission Timestamp"] = current_timestamp
+        # Add the current location data to the dictionary
+        data["Current Location"] = responses.get("current_location", "Not available")
+
 
         now = datetime.datetime.now()
         filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
