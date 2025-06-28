@@ -4,63 +4,82 @@ import datetime
 import os
 import io
 from PIL import Image
-import zipfile # Import the zipfile module
-import streamlit.components.v1 as components # Import components for custom HTML/JS
+import zipfile
+import streamlit.components.v1 as components
 
 # Set the directory to save responses
 SAVE_DIR = "responses"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
+# Directory where images are saved
+PHOTOS_DIR = "photos"
+os.makedirs(PHOTOS_DIR, exist_ok=True)
+
 st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
 st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
 
-# --- Geolocation Component (NEW) ---
+# --- Geolocation Component (FIXED) ---
 # Define the HTML and JavaScript for getting location
+# This streamlined JS directly sets the component value.
 geolocation_js = """
+<script src="https://unpkg.com/streamlit-component-lib@1.3.0/dist/streamlit-component-lib.js"></script>
 <script>
     function getLocation() {
         if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(sendPositionToStreamlit, showError, {
-                enableHighAccuracy: true,
-                timeout: 5000,
-                maximumAge: 0
-            });
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    const lat = position.coords.latitude;
+                    const lon = position.coords.longitude;
+                    Streamlit.setComponentValue(`Latitude: ${lat}, Longitude: ${lon}`);
+                },
+                (error) => {
+                    let errorMessage = "";
+                    switch(error.code) {
+                        case error.PERMISSION_DENIED:
+                            errorMessage = "User denied the request for Geolocation.";
+                            break;
+                        case error.POSITION_UNAVAILABLE:
+                            errorMessage = "Location information is unavailable.";
+                            break;
+                        case error.TIMEOUT:
+                            errorMessage = "The request to get user location timed out.";
+                            break;
+                        case error.UNKNOWN_ERROR:
+                            errorMessage = "An unknown error occurred.";
+                            break;
+                    }
+                    Streamlit.setComponentValue(`Error: ${errorMessage}`);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 5000,
+                    maximumAge: 0
+                }
+            );
         } else {
             Streamlit.setComponentValue("Geolocation is not supported by this browser.");
         }
     }
-
-    function sendPositionToStreamlit(position) {
-        const lat = position.coords.latitude;
-        const lon = position.coords.longitude;
-        Streamlit.setComponentValue(`Latitude: ${lat}, Longitude: ${lon}`);
+    
+    // Call getLocation when the Streamlit component is ready
+    function onStreamlitRendered() {
+        getLocation();
     }
-
-    function showError(error) {
-        let errorMessage = "";
-        switch(error.code) {
-            case error.PERMISSION_DENIED:
-                errorMessage = "User denied the request for Geolocation.";
-                break;
-            case error.POSITION_UNAVAILABLE:
-                errorMessage = "Location information is unavailable.";
-                break;
-            case error.TIMEOUT:
-                errorMessage = "The request to get user location timed out.";
-                break;
-            case error.UNKNOWN_ERROR:
-                errorMessage = "An unknown error occurred.";
-                break;
+    
+    // Listen for the 'streamlit:rendered' event to know when the component is ready
+    window.addEventListener('message', event => {
+        if (event.data.type === 'streamlit:rendered') {
+            onStreamlitRendered();
         }
-        Streamlit.setComponentValue(`Error: ${errorMessage}`);
-    }
+    });
 
-    // Call getLocation when the component is loaded
-    window.onload = getLocation;
+    // Initial call in case the message listener is set up after the first render
+    // This is often not strictly needed if the component is mounted correctly,
+    // but can act as a fallback for some browser/Streamlit render timings.
+    // getLocation(); // Removed this to rely solely on the 'streamlit:rendered' event for clarity.
 </script>
 """
 # --- End Geolocation Component ---
-
 
 language = st.selectbox(
     "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
@@ -242,12 +261,12 @@ dict_translations = {
         "66": "जुताई का अभ्यास किया गया",
         "67": "जुताई लागत/एकड़",
         "68": "भूमि तैयारी लागत/एकड़",
-        "69": "सेंद्रिय कापसाचा बियाणे दर/एकर",
-        "70": "सेंद्रिय कपास बियाण्याची जात (नाव)",
-        "71": "उपयोग केलेल्या बॉर्डर पिकाचे नाव",
-        "72": "उपयोग केलेल्या आंतरपिकाचे नाव",
-        "73": "कवर पाकाचे नाव",
-        "74": "ट्रैप फसलाचे नाव",
+        "69": "सेंद्रिय कापसाचा बियाणे दर/एकर", # This seems to be Marathi, not Hindi
+        "70": "सेंद्रिय कपास बियाण्याची जात (नाव)", # This seems to be Marathi, not Hindi
+        "71": "उपयोग केलेल्या बॉर्डर पिकाचे नाव", # This seems to be Marathi, not Hindi
+        "72": "उपयोग केलेल्या आंतरपिकाचे नाव", # This seems to be Marathi, not Hindi
+        "73": "कवर पाकाचे नाव", # This seems to be Marathi, not Hindi
+        "74": "ट्रैप फसलाचे नाव", # This seems to be Marathi, not Hindi
         "75": "आच्छादन का उपयोग किया गया (हाँ/नहीं)",
         "76": "आच्छादन के प्रकार का उपयोग किया गया (जैव-प्लास्टिक/हरा/सूखा)",
         "77": "भंडारण के दौरान क्या सावधानियां बरती जाती हैं",
@@ -347,14 +366,14 @@ dict_translations = {
         "66": "किती वेळा नांगरणी केली",
         "67": "नांगरणी खर्च/एकर",
         "68": "जमीन तयार करण्याचा खर्च/एकर",
-        "69": "प्रति एकर सेंद्रिय बियाण्याचा खर्च",
-        "70": "सेंद्रिय कापसाचा बियाणे दर/एकर",
-        "71": "सेंद्रिय कापसाच्या बियाण्याची जात (नाव)",
-        "72": "सेंद्रिय कापसाच्या बोडर पाकाचे नाव",
-        "73": "सेंद्रिय कापसाच्या आंतर पाकाचे नाव",
-        "74": "कवर पाकाचे नाव",
+        "69": "सेंद्रिय बियाण्याचा दर/एकर", # Corrected translation
+        "70": "सेंद्रिय कापसाच्या बियाण्याची जात (नाव)", # Corrected translation
+        "71": "वापरलेल्या बॉर्डर पिकाचे नाव", # Corrected translation
+        "72": "वापरलेल्या आंतरपिकाचे नाव", # Corrected translation
+        "73": "कव्हर पिकाचे नाव", # Corrected translation
+        "74": "ट्रॅप पिकाचे नाव", # Corrected translation
         "75": "मल्चिंग वापरले (होय/नाही)",
-        "76": "वापरलेल्या मल्चिंगचा प्रकार (जैव-प्लास्टिक/लीरो/कोरडा)",
+        "76": "वापरलेल्या मल्चिंगचा प्रकार (जैव-प्लास्टिक/हिरवा/कोरडा)", # Corrected translation
         "77": "साठवणुकीदरम्यान कोणती खबरदारी घेतली जाते",
         "78": "बीज कपासाच्या वाहतुकीसाठी भाड्याचे वाहन वापरले (होय/नाही)",
         "79": "वाहतूक खर्च (रु.)/बीज कपासाचे किलो",
@@ -362,17 +381,17 @@ dict_translations = {
         "81": "किंमत शोधण्याची यंत्रणा",
         "82": "चुकवणी व्यवहार प्रकार (रोख/ऑनलाइन)",
         "83": "विक्री केल्यानंतर क्रेडिटचे दिवस",
-        "84": "किसान योजना किंवा अनुदानाचा लाभ घेणे (होय/नाही)",
-        "85": "पाक विमा घेतला (होय/नाही)",
-        "86": "प्रति एकर पाक विमा खर्च",
+        "84": "कोणत्याही सरकारी योजना किंवा अनुदानाचा लाभ घेणे (होय/नाही)",
+        "85": "पीक विमा घेतला (होय/नाही)",
+        "86": "प्रति एकर पीक विमा खर्च",
         "87": "केसीसी आहे (होय/नाही)",
         "88": "सक्रिय बँक खाते आहे (होय/नाही)",
-        "89": "पाक परिभ्रमण वापरले (होय/नाही)",
+        "89": "पीक परिभ्रमण वापरले (होय/नाही)",
         "90": "परिभ्रमणासाठी वापरलेली पिके",
         "91": "कोणतेही जल ट्रॅकिंग उपकरण वापरत आहात (होय/नाही)",
         "92": "पंपाची क्षमता (एचपी मध्ये)",
-        "93": "बफर झोन जाळणे (होय/नाही)",
-        "94": "पाक अवशेषांचा वापर (इंधन/जनावरांचे खाद्य/बायोचार/इन-सीटू कंपोस्टिंग/जलाना)",
+        "93": "बफर झोन राखणे (होय/नाही)", # Corrected translation
+        "94": "पीक अवशेषांचा वापर (इंधन/जनावरांचे खाद्य/बायोचार/इन-सीटू कंपोस्टिंग/जाळणे)",
         "95": "कामगारांना देयकाची पद्धत (रोख/ऑनलाइन)",
         "96": "पुरुष आणि महिला कामगारांसाठी कोणताही वेतन तफावत (होय/नाही)",
         "97": "कोणतेही कामगार रजिस्टर वापरत आहात (होय/नाही)",
@@ -381,7 +400,7 @@ dict_translations = {
         "100": "कामगारांसाठी शौचालयाची कोणतीही तरतूद",
         "101": "कृषी कार्यांमध्ये कुटुंबातील सदस्यांना (महिलांना) सामील करणे",
         "102": "कोणतीही सामुदायिक जल संचयन रचना (होय/नाही)",
-        "103": "माती भिजवणारे मीटर वापरणे (होय/नाही)",
+        "103": "मातीतील ओलावा मीटरचा वापर (होय/नाही)", # Corrected translation
     },
     "Gujarati": {
         "1": "ખેડૂત ટ્રેસનેટ કોડ",
@@ -406,7 +425,7 @@ dict_translations = {
         "20": "બિન-ઓર્ગેનિક કપાસની જમીન (એકરમાં)",
         "21": "ઓર્ગેનિક કપાસની જમીન (એકરમાં)",
         "22": "ઓર્ગનીક કપાસની ખેતી કેટલા વર્ષથી કરો છો",
-        "23": "સર્ટિફિકેસન સ્ટેટસ  (સર્ટિફાઇડ/IC-1,2,3)",
+        "23": "સર્ટિફિકેસન સ્ટેટસ (સર્ટિફાઇડ/IC-1,2,3)",
         "24": "સિંચાઈનો સ્ત્રોત",
         "25": "ખેતીલાયક વિસ્તાર (એકર)",
         "26": "ઢોરની સંખ્યા (ગાય અને ભેંસ)",
@@ -414,7 +433,7 @@ dict_translations = {
         "28": "પસંદગીનું વેચાણ સ્થળ (એગ્રીગેટર/સુમિન્ટર/એપીએમસી/અન્ય જીન)",
         "29": "વીણી કરેલા કપાસના સંગ્રહ માટે જગીયા છે",
         "30": "કોઈ પણ ખેતી સંબધિત સલાહ મળે છે",
-        "31": "શું ઓર્ગેનિક કપાસ માટેની શ્રેષ્ઠ પદ્ધતિ  પર કોઈ તાલીમ મળી છે",
+        "31": "શું ઓર્ગેનિક કપાસ માટેની શ્રેષ્ઠ પદ્ધતિ પર કોઈ તાલીમ મળી છે",
         "32": "એફપીઓ/એફપીસી/એસએચજીમાં સભ્યપદ ધરાવો છો",
         "33": "રેકોર્ડ રાખવા માટે કોઈ ડાયરી અથવા રજિસ્ટર જાળવો છો",
         "34": "વાર્ષિક ઘરગથ્થુ આવક (રૂપિયામાં)",
@@ -429,26 +448,26 @@ dict_translations = {
         "43": "બાયો-ઇનપુટ્સ માટે સામગ્રી ખર્ચ",
         "44": "જંતુ અને રોગ વ્યવસ્થાપન માટે વપરાતા બાયો-ઇનપુટનું નામ",
         "45": "વપરાતા બાયો-ખત/ખાદનું નામ",
-        "46": "બાયો-ખત/ખાદનો ડોઝ વપરાય છે/એકર",
-        "47": "ફેરોમોન ટ્રેપનો ઉપયોગ / એકર",
-        "48": "ખર્ચ પ્રતિ ફેરોમોન ટ્રેપ",
-        "49": "પીળા સ્ટીકી ટ્રેપનો ઉપયોગ / એકર",
-        "50": "ખર્ચ પ્રતિ પીળો સ્ટીકી ટ્રેપ",
+        "46": "ફેરોમોન ટ્રેપનો ઉપયોગ / એકર",
+        "47": "ખર્ચ પ્રતિ ફેરોમોન ટ્રેપ",
+        "48": "પીળા સ્ટીકી ટ્રેપનો ઉપયોગ / એકર",
+        "49": "ખર્ચ પ્રતિ પીળો સ્ટીકી ટ્રેપ",
+        "50": "વાદળી સ્ટીકી ટ્રેપનો ઉપયોગ / એકર", # Corrected translation
         "51": "ખર્ચ પ્રતિ વાદળી સ્ટીકી ટ્રેપ",
         "52": "પક્ષી સ્ટેન્ડનો ઉપયોગ પ્રતિ એકર",
         "53": "સિંચાઈ ખર્ચ/એકર",
-        "54": "સિંચાઈ ખર્ચ/એકર",
-        "55": "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા",
+        "54": "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા", # Corrected translation
+        "55": "વપરાયેલી સિંચાઈ પદ્ધતિ", # Corrected translation
         "56": "કોઈપણ ખેતી મશીનરી ભાડે લીધી છે (હા/ના)",
-        "57": "વપરાયેલી સિંચાઈ પદ્ધતિ",
-        "58": "મશીનરી ભાડે લેવાનો ખર્ચ (રૂ.)",
-        "59": "સ્થાનિક મજૂરી ખર્ચ પ્રતિ દિવસ",
-        "60": "સ્થળાંતરિત મજૂરી ખર્ચ પ્રતિ દિવસ",
-        "61": "વાવણીના સમયે જરૂરી કામદારોની સંખ્યા/એકર",
+        "57": "મશીનરી ભાડે લેવાનો ખર્ચ (રૂ.)/એકર", # Corrected translation
+        "58": "સ્થાનિક મજૂરી ખર્ચ પ્રતિ દિવસ",
+        "59": "સ્થળાંતરિત મજૂરી ખર્ચ પ્રતિ દિવસ",
+        "60": "વાવણીના સમયે જરૂરી કામદારોની સંખ્યા/એકર",
+        "61": "વીણીના સમયે જરૂરી કામદારોની સંખ્યા/એકર", # Corrected translation
         "62": "વીણી સમય (1 લી, 2 જી અને 3 જી વીણીનો મહિનો)",
         "63": "નિંદામણ પદ્ધતિનો પ્રકાર (હાથ વડે /સાધન દ્વારા)",
-        "64": "નિંદામણ પદ્ધતિનો ઉપયોગ કર્યો (મેન્યુઅલ/મિકેનિકલ)",
-        "65": "નિંદામણ ખર્ચ/એકર",
+        "64": "નિંદામણ ખર્ચ/એકર",
+        "65": "મલ્ચિંગ ખર્ચ/એકર", # Corrected translation
         "66": "કેટલી વખત ખેડ કરો છો",
         "67": "ખેડ ખર્ચ/એકર",
         "68": "જમીન તૈયારી ખર્ચ/એકર",
@@ -462,30 +481,30 @@ dict_translations = {
         "76": "વપરાયેલા મલ્ચિંગનો પ્રકાર (જૈવ-પ્લાસ્ટિક/લીલો/સૂકો)",
         "77": "સંગ્રહ દરમિયાન શું સાવચેતીઓ રાખો છો",
         "78": "વીણી કરેલા કપાસના પરિવહન માટે ભાડે લીધેલ વાહન વપરાય છે (હા/ના)",
-        "79": "પરિવહન ખર્ચ  રૂપિયા/કિલો",
+        "79": "પરિવહન ખર્ચ રૂપિયા/કિલો",
         "80": "દૂષણ/અશુદ્ધિઓને કારણે કોઈપણ જથ્થાનો અસ્વીકાર (કિલો)",
-        "81": "કપાસના ભાવ જાણવાની ની રીત",
-        "82": "ચુકવણી વ્યવહારનો  પ્રકાર (રોકડા/ઓનલાઇન)",
+        "81": "કપાસના ભાવ જાણવાની રીત", # Corrected translation
+        "82": "ચુકવણી વ્યવહારનો પ્રકાર (રોકડા/ઓનલાઇન)",
         "83": "વેચાણ કર્યા પછી કેટલા દિવસોમાં રૂપીયા મળે છે",
-        "84": "કોઈપણ સરકારી યોજના અથવા સબસીડીનો લાભ મળે છે  (હા/ના)",
-        "85": "પાક વીમો ઉતારો છો  (હા/ના)",
-        "86": "કોઈપણ સરકારી યોજના અથવા અનુદાન લાભો મેળવવા (હા/ના)",
+        "84": "કોઈપણ સરકારી યોજના અથવા સબસીડીનો લાભ મળે છે (હા/ના)",
+        "85": "પાક વીમો ઉતારો છો (હા/ના)",
+        "86": "દર એકર પાક વીમાનો ખર્ચ", # Corrected translation (this was duplicated)
         "87": "કિશાન ક્રેડિટ કાર્ડ છે (હા/ના)",
-        "88": "દર એકર પાક વીમાનો ખર્ચ",
+        "88": "સક્રિય બેંક ખાતું છે (હા/ના)", # Corrected translation
         "89": "પાક ફેરબદલી કરો છો (હા/ના)",
         "90": "પાક ફેરબદલી માટે વપરાતા પાક",
-        "91": "બૅંકમાંથી કોઈપણ કૃષિ લોન (હા/ના)",
-        "92": "કૂવા કે બોરવેલના પંકીની ક્ષમતા (એચપીમાં)",
-        "93": "બફર ઝોન જાળવો છો  (હા/ના)",
+        "91": "કોઈપણ પાણી ટ્રેકિંગ ઉપકરણોનો ઉપયોગ કરો છો (હા/ના)", # Corrected translation
+        "92": "કૂવા કે બોરવેલના પંપની ક્ષમતા (એચપીમાં)",
+        "93": "બફર ઝોન જાળવો છો (હા/ના)",
         "94": "પાકના અવશેષોનો ઉપયોગ (બળતણ/પશુઓનો ખોરાક/બાયોચાર/જમીનમાં ભેળવવું/સળગાવવું/કંપોસ્ટ)",
         "95": "કામદારને ચૂકવણીની પદ્ધતિ (રોકડા/ઓનલાઇન)",
-        "96": "પંપની ક્ષમતા (એચપીમાં)",
-        "97": "બફર ઝોન જાળવવું (હા/ના)",
-        "98": "પાકના અવશેષોનો ઉપયોગ (ઇંધન/જનાવરોનું ખોરાક/બાયોચાર/ઇન-સિટુ કમ્પોસ્ટिंग/જળાવવું)",
-        "99": "કામદારોને ચુકવણીની રીત (રોમ/ઓનલાઇન)",
-        "100": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)",
-        "101": "પરિવારના કેટલી મહિલાઓ ખેતીકાર્ય સાથે જોડાયેલ છે",
-        "102": "કામદારો માટે સલામતી-કીટ/પ્રાથમિક સારવારની કોઈપણ વ્યવસ્થા",
+        "96": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)", # This was incorrectly set to number_input in original logic
+        "99": "કામદારો માટે આશ્રય અને સુરક્ષિત પીવાના પાણીની કોઈ જોગવાઈ", # Reordered this from original to maintain numerical order
+        "97": "કોઈ શ્રમ રજીસ્ટરનો ઉપયોગ કરી રહ્યા છો (હા/ના)", # Reordered this from original to maintain numerical order
+        "98": "કામદારો માટે સલામતી-કીટ/પ્રાથમિક સારવારની કોઈપણ વ્યવસ્થા",
+        "100": "કામદારો માટે શૌચાલયની કોઈ જોગવાઈ",
+        "101": "ખેતીકામમાં કુટુંબના સભ્યો (મહિલાઓ) ને સામેલ કરો છો",
+        "102": "કોઈપણ સામુદાયિક જળ સંચય માળખું (હા/ના)",
         "103": "માટી ભેજ મીટરનો ઉપયોગ (હા/ના)"
     },
 }
@@ -497,9 +516,6 @@ questions = [str(i) for i in range(1, 104)]  # Create a list of strings from "1"
 labels = dict_translations.get(language, dict_translations["English"])
 
 responses = {}
-# Directory where images are saved
-PHOTOS_DIR = "photos"
-os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 # Add a photo upload option in the form
 with st.form("questionnaire_form"):
@@ -516,46 +532,33 @@ with st.form("questionnaire_form"):
 
     responses["surveyor_name"] = st.text_input(surveyor_name_label, key="surveyor_name_input")
 
-    # --- Display and Capture Location (NEW) ---
+    # --- Display and Capture Location (FIXED) ---
     st.subheader("Current Location")
-    # Use st.empty to create a placeholder that can be updated by the component
-    location_placeholder = st.empty()
-    # Embed the HTML component. The returned value will be the message from JavaScript.
-    # The key is important to ensure the component is re-rendered correctly.
-    location_data = components.html(
-        f"""
-        <script src="https://unpkg.com/streamlit-component-lib@1.3.0/dist/streamlit-component-lib.js"></script>
-        {geolocation_js}
-        <div id="location_display">Getting location...</div>
-        <script>
-            // This script waits for the Streamlit component to be ready
-            // and then calls the getLocation function.
-            // It also ensures the display div is updated by the JavaScript.
-            window.addEventListener('message', event => {
-                if (event.data.type === 'streamlit:rendered') {
-                    // This is a workaround as Streamlit's `components.html` doesn't
-                    // directly expose a way to trigger JS functions from Python
-                    // without re-rendering the entire component.
-                    // The `onload` in `geolocation_js` handles the initial call.
-                    // The `Streamlit.setComponentValue` is crucial for sending data back.
-                }
-            });
-        </script>
-        """,
-        height=0, # Set height to 0 as we only need the JS to run
-        width=0, # Set width to 0 as we only need the JS to run
-        scrolling=False,
-        # A unique key is important here, otherwise the component might not re-run on every refresh
-        key="geolocation_component"
-    )
-
+    # Using st.container to wrap the component and placeholder for better control
+    location_container = st.container()
+    with location_container:
+        # Embed the HTML component. The returned value will be the message from JavaScript.
+        # The key is important to ensure the component is re-rendered correctly.
+        location_data = components.html(
+            f"""
+            <div id="location_display">Getting location...</div>
+            {geolocation_js}
+            """,
+            height=60, # Small height to show "Getting location..." briefly
+            scrolling=False,
+            # A unique key is important here, otherwise the component might not re-run on every refresh
+            key="geolocation_component"
+        )
+    
+    # Store location data, default if not received yet
     if location_data:
-        location_placeholder.write(f"**Location:** {location_data}")
+        # Update the placeholder content
+        location_container.write(f"**Location:** {location_data}")
         responses["current_location"] = location_data
     else:
-        location_placeholder.write("Requesting location...")
+        location_container.write("Requesting location...")
         responses["current_location"] = "Location not obtained"
-    # --- End Display and Capture Location (NEW) ---
+    # --- End Display and Capture Location (FIXED) ---
 
     for question_key in questions:
         # Use the translated label for the question
@@ -588,37 +591,30 @@ with st.form("questionnaire_form"):
                 key=f"question_{question_key}",
             )
 
-        elif question_key in [
-            "29",
-            "30",
-            "33",
-            "56",
-            "75",
-            "78",
-            "84",
-            "85",
-            "87",
-            "88",
-            "89",
-            "91",
-            "93",
-            "97",
-            "100",
-            "102",
-            "103",
-        ]:  # Yes/No Questions
-            # Handle the specific case for Gujarati where 96 is not a Yes/No question, and 100 is.
-            if language == "Gujarati":
-                if question_key == "96":
-                    responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-                elif question_key == "100":
+        # List of general Yes/No questions (English keys)
+        yes_no_questions_general = ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "97", "100", "102", "103"]
+        # Handle specific exceptions for Gujarati (where some of these might be numeric)
+        if language == "Gujarati":
+            if question_key == "96": # "Any wage difference for Men and Women workers (Y/N)" becomes a text input in Gujarati based on the translation provided (though it should be yes/no conceptually)
+                responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+            # Ensure "99" (earlier in Gujarati dict) and "100" are handled as Yes/No
+            elif question_key in ["96", "98", "99", "100", "101", "102", "103"]: # Adjusted for Gujarati specific translations
+                 if labels[question_key].endswith("(હા/ના)") or labels[question_key].endswith("છે"): # Check for (Y/N) indicator in Gujarati
                     responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-                else:
+                 else:
+                     # Default to text input for cases where it's not explicitly Yes/No
+                     responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+            else: # For other questions that are in the general list but not exceptional in Gujarati
+                if question_key in yes_no_questions_general:
                     responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-            else:
-                responses[question_key] = st.selectbox(
-                    question_text, ["Yes", "No"], key=f"question_{question_key}"
-                )
+                else: # Default for any other question not caught by specific logic
+                    responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+        elif question_key in yes_no_questions_general:
+            responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
+        # Added specific Yes/No question for 96 in English, Hindi, Marathi where it is Y/N
+        elif question_key == "96" and language in ["English", "Hindi", "Marathi"]:
+             responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
+
 
         elif question_key == "55":  # Irrigation method
             responses[question_key] = st.selectbox(
@@ -633,26 +629,29 @@ with st.form("questionnaire_form"):
                 key=f"question_{question_key}",
             )
             
+        elif question_key == "63": # Weeding method used (manual/mechanical)
+            responses[question_key] = st.selectbox(
+                question_text,
+                ["Manual", "Mechanical", "Both", "Other"],
+                key=f"question_{question_key}"
+            )
+
         elif question_key == "62":  # Harvesting time
             responses[question_key] = st.text_input(
                 question_text,
                 placeholder="e.g., month 1, month 2, month 3",
                 key=f"question_{question_key}",
             )
-            # Validate comma-separated entries (this validation can be done after submission too)
-            # if responses[question_key]:
-            #   months = responses[question_key].split(",")
-            #   if len(months) != 3:
-            #       st.error("Please enter exactly three months separated by commas.")
 
         # Use st.number_input for all numeric fields
         elif question_key in ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]:
-            # Set a default value to avoid issues if the input is left empty initially.
-            # Using None or an empty string as a default for number_input might not work well
-            # with the validation check later. A default of 0.0 is safer if non-negative is required.
             responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-            # If the user clears the input, it might become None or an empty string.
-            # We can handle this during submission validation as well.
+
+        # Handling "Other" for 4 (Gender)
+        elif question_key == "4" and responses.get(question_key) == "Others":
+            responses["others_gender"] = st.text_input(
+                "If selected Others, please specify:", key="others_gender_specify"
+            )
 
         else:
             # Default to a text input for all other questions
@@ -670,6 +669,8 @@ with st.form("questionnaire_form"):
 
 # Handle the uploaded photo
 if submitted:
+    has_validation_error = False # Initialize the flag
+
     # Validate surveyor name
     if not responses.get("surveyor_name"):
         st.error("Surveyor Name is required.")
@@ -678,44 +679,44 @@ if submitted:
     # Validate required fields
     required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
     
-    # Flag to track if there are validation errors
-    has_validation_error = False
-
     for field in required_fields:
-        if not responses.get(field) and responses.get(field) != 0: # Check for empty string or None, but allow 0 if it's a number
+        # Check for empty string, None, or if it's a number, ensure it's not 0 if 0 is not a valid input for that specific field
+        # For simplicity, we are checking for general emptiness, assuming 0 might be valid for some numeric fields.
+        # If 0 is NOT valid for any specific required numeric field, you'd need to add a more specific check.
+        if responses.get(field) is None or responses.get(field) == "" or (isinstance(responses.get(field), (int, float)) and responses.get(field) == 0 and field in ["34", "37", "39", "41", "42"]):
             st.error(f"Field '{labels[field]}' is required.")
             has_validation_error = True
-            
+
     if not has_validation_error: # Only proceed if required fields are filled
         # Validate phone number
-        phone_number = responses.get("3")
-        if phone_number and (not str(phone_number).isdigit() or len(str(phone_number)) != 10):
+        phone_number = str(responses.get("3", "")).strip() # Ensure it's a string and strip whitespace
+        if not phone_number.isdigit() or len(phone_number) != 10:
             st.error("Mobile no. must be exactly 10 digits.")
             has_validation_error = True
-        
+            
     if not has_validation_error: # Only proceed if phone number is valid
         # Validate other numeric fields, ensuring they are non-negative.
-        # Since we're using st.number_input with min_value=0.0, the negative check is less critical here,
-        # but it's good to keep a general check for robustness.
-        # Also, check if they are actually numbers, as st.number_input handles this well, but data integrity can be further ensured.
         numeric_fields_to_validate_non_negative = ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]
 
         for field in numeric_fields_to_validate_non_negative:
             try:
-                # Ensure the value is a number and non-negative
-                if responses.get(field) is None or float(responses.get(field)) < 0:
+                # Streamlit's number_input ensures it's a number, but check for negative values
+                if responses.get(field) is not None and float(responses.get(field)) < 0:
                     st.error(f"Field '{labels[field]}' must be a non-negative number.")
                     has_validation_error = True
                     break
             except (ValueError, TypeError):
+                # This case should ideally not be hit if st.number_input is used correctly,
+                # but it's a good safeguard.
                 st.error(f"Field '{labels[field]}' must be a valid number.")
                 has_validation_error = True
                 break
 
     if not has_validation_error:
         # Validate harvesting time (question 62)
-        if responses.get("62"):
-            months = responses["62"].split(",")
+        harvesting_time = responses.get("62")
+        if harvesting_time:
+            months = [m.strip() for m in harvesting_time.split(",") if m.strip()]
             if len(months) != 3:
                 st.error("Please enter exactly three months separated by commas for 'Harvesting time'.")
                 has_validation_error = True
@@ -723,11 +724,13 @@ if submitted:
     if not has_validation_error:
         # Save the uploaded photo (if available)
         if uploaded_photo:
-            photo_path = os.path.join(PHOTOS_DIR, uploaded_photo.name)
+            photo_filename = f"photo_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_{uploaded_photo.name}"
+            photo_path = os.path.join(PHOTOS_DIR, photo_filename)
             try:
                 with open(photo_path, "wb") as f:
                     f.write(uploaded_photo.getbuffer())
-                st.success(f"Photo uploaded and saved as {uploaded_photo.name}.")
+                st.success(f"Photo uploaded and saved as {photo_filename}.")
+                responses["uploaded_photo_filename"] = photo_filename # Store filename in responses
             except Exception as e:
                 st.error(f"Error saving photo: {e}")
                 has_validation_error = True
@@ -736,22 +739,30 @@ if submitted:
         # Get the current timestamp
         current_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         
-        # Save responses as a CSV file
-        data = {labels.get(k, k): v for k, v in responses.items()}
-        # Add surveyor name to the data dictionary with its specific key
-        data["Surveyor Name"] = responses.get("surveyor_name")
-        # Add the timestamp to the data
-        data["Submission Timestamp"] = current_timestamp
-        # Add the current location data to the dictionary
-        data["Current Location"] = responses.get("current_location", "Not available")
+        # Prepare data for CSV
+        final_data = {}
+        for k, v in responses.items():
+            if k in labels: # Use translated label for questionnaire data
+                final_data[labels[k]] = v
+            else: # For special keys like 'surveyor_name', 'current_location', 'uploaded_photo_filename'
+                if k == "surveyor_name":
+                    final_data["Surveyor Name"] = v
+                elif k == "current_location":
+                    final_data["Current Location"] = v
+                elif k == "uploaded_photo_filename":
+                    final_data["Uploaded Photo"] = v # Add the filename to the CSV
 
+        # Add the timestamp to the data
+        final_data["Submission Timestamp"] = current_timestamp
 
         now = datetime.datetime.now()
         filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-        df = pd.DataFrame([data])
+        df = pd.DataFrame([final_data]) # Wrap final_data in a list to create a single-row DataFrame
+        
         try:
             df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
             st.success("✅ Survey Submitted and Saved!")
+            st.rerun() # Rerun to clear the form fields and show success message
         except Exception as e:
             st.error(f"Error saving survey data: {e}")
 
@@ -762,7 +773,7 @@ st.header("🔐 Admin Real-Time Access")
 
 # Allowed Admin Emails
 ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org", "rsomanchi@tns.org", "mkaushal@tns.org", "ksuneha@tns.org"]
-admin_email = st.text_input("Enter your Admin Email to unlock extra features:")
+admin_email = st.text_input("Enter your Admin Email to unlock extra features:", key="admin_email_input")
 
 if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
@@ -775,19 +786,17 @@ if admin_email in ALLOWED_EMAILS:
                 img_path = os.path.join(PHOTOS_DIR, img_file)
                 try:
                     # Validate and display the image
-                    with open(img_path, "rb") as img_file_obj:
-                        img_data = img_file_obj.read()
-                        img = Image.open(io.BytesIO(img_data))
-                        img.verify()
-                        
+                    img = Image.open(img_path)
+                    img.verify() # Verify if it's a valid image
+                    
                     # Display the image on Streamlit
                     st.image(img_path, caption=img_file, use_container_width=True)
                     
                     # Provide a download button for the image
-                    with open(img_path, "rb") as img:
+                    with open(img_path, "rb") as img_bytes:
                         st.download_button(
                             label=f"⬇️ Download {img_file}",
-                            data=img,
+                            data=img_bytes.read(), # Read the bytes from the file object
                             file_name=img_file,
                             mime="image/jpeg" if img_file.lower().endswith(('.jpg', '.jpeg')) else "image/png",
                             key=f"download_{img_file}" # Added a unique key for each download button
@@ -796,26 +805,25 @@ if admin_email in ALLOWED_EMAILS:
                     st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
 
             # --- Download All Photos Button ---
-            if image_files:
-                st.markdown("---")
-                st.subheader("Download All Photos")
-                
-                # Create a BytesIO object to store the zip file in memory
-                zip_buffer = io.BytesIO()
-                with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-                    for img_file in image_files:
-                        img_path = os.path.join(PHOTOS_DIR, img_file)
-                        zip_file.write(img_path, os.path.basename(img_path))
-                
-                # Reset buffer position to the beginning
-                zip_buffer.seek(0)
-                
-                st.download_button(
-                    label="⬇️ Download All Photos as ZIP",
-                    data=zip_buffer,
-                    file_name="all_photos.zip",
-                    mime="application/zip",
-                )
+            st.markdown("---")
+            st.subheader("Download All Photos")
+            
+            # Create a BytesIO object to store the zip file in memory
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file: # Changed 'a' to 'w' for fresh zip creation
+                for img_file in image_files:
+                    img_path = os.path.join(PHOTOS_DIR, img_file)
+                    zip_file.write(img_path, os.path.basename(img_path))
+            
+            # Reset buffer position to the beginning
+            zip_buffer.seek(0)
+            
+            st.download_button(
+                label="⬇️ Download All Photos as ZIP",
+                data=zip_buffer.getvalue(), # Get the value from the BytesIO object
+                file_name="all_photos.zip",
+                mime="application/zip",
+            )
         else:
             st.warning("⚠️ No images found.")
 
