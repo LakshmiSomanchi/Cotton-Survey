@@ -4,8 +4,8 @@ import datetime
 import os
 import io
 from PIL import Image
-import zipfile
-import streamlit.components.v1 as components
+import zipfile # Import the zipfile module
+# import streamlit.components.v1 as components # REMOVED: Not needed without geolocation component
 
 # Set the directory to save responses
 SAVE_DIR = "responses"
@@ -18,68 +18,11 @@ os.makedirs(PHOTOS_DIR, exist_ok=True)
 st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
 st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
 
-# --- Geolocation Component (FIXED) ---
+# --- Geolocation Component (REMOVED) ---
 # Define the HTML and JavaScript for getting location
-# This streamlined JS directly sets the component value.
-geolocation_js = """
-<script src="https://unpkg.com/streamlit-component-lib@1.3.0/dist/streamlit-component-lib.js"></script>
-<script>
-    function getLocation() {
-        if (navigator.geolocation) {
-            navigator.geolocation.getCurrentPosition(
-                (position) => {
-                    const lat = position.coords.latitude;
-                    const lon = position.coords.longitude;
-                    Streamlit.setComponentValue(`Latitude: ${lat}, Longitude: ${lon}`);
-                },
-                (error) => {
-                    let errorMessage = "";
-                    switch(error.code) {
-                        case error.PERMISSION_DENIED:
-                            errorMessage = "User denied the request for Geolocation.";
-                            break;
-                        case error.POSITION_UNAVAILABLE:
-                            errorMessage = "Location information is unavailable.";
-                            break;
-                        case error.TIMEOUT:
-                            errorMessage = "The request to get user location timed out.";
-                            break;
-                        case error.UNKNOWN_ERROR:
-                            errorMessage = "An unknown error occurred.";
-                            break;
-                    }
-                    Streamlit.setComponentValue(`Error: ${errorMessage}`);
-                },
-                {
-                    enableHighAccuracy: true,
-                    timeout: 5000,
-                    maximumAge: 0
-                }
-            );
-        } else {
-            Streamlit.setComponentValue("Geolocation is not supported by this browser.");
-        }
-    }
-    
-    // Call getLocation when the Streamlit component is ready
-    function onStreamlitRendered() {
-        getLocation();
-    }
-    
-    // Listen for the 'streamlit:rendered' event to know when the component is ready
-    window.addEventListener('message', event => {
-        if (event.data.type === 'streamlit:rendered') {
-            onStreamlitRendered();
-        }
-    });
+# geolocation_js = """ ... """ # REMOVED
+# --- End Geolocation Component (REMOVED) ---
 
-    // Initial call in case the message listener is set up after the first render
-    // This is often not strictly needed if the component is mounted correctly,
-    // but can act as a fallback for some browser/Streamlit render timings.
-    // getLocation(); // Removed this to rely solely on the 'streamlit:rendered' event for clarity.
-</script>
-"""
-# --- End Geolocation Component ---
 
 language = st.selectbox(
     "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
@@ -532,33 +475,18 @@ with st.form("questionnaire_form"):
 
     responses["surveyor_name"] = st.text_input(surveyor_name_label, key="surveyor_name_input")
 
-    # --- Display and Capture Location (FIXED) ---
-    st.subheader("Current Location")
-    # Using st.container to wrap the component and placeholder for better control
-    location_container = st.container()
-    with location_container:
-        # Embed the HTML component. The returned value will be the message from JavaScript.
-        # The key is important to ensure the component is re-rendered correctly.
-        location_data = components.html(
-            f"""
-            <div id="location_display">Getting location...</div>
-            {geolocation_js}
-            """,
-            height=60, # Small height to show "Getting location..." briefly
-            scrolling=False,
-            # A unique key is important here, otherwise the component might not re-run on every refresh
-            key="geolocation_component"
-        )
-    
-    # Store location data, default if not received yet
-    if location_data:
-        # Update the placeholder content
-        location_container.write(f"**Location:** {location_data}")
-        responses["current_location"] = location_data
-    else:
-        location_container.write("Requesting location...")
-        responses["current_location"] = "Location not obtained"
-    # --- End Display and Capture Location (FIXED) ---
+    # --- Geolocation Display and Capture (REMOVED) ---
+    # st.subheader("Current Location") # REMOVED
+    # location_container = st.container() # REMOVED
+    # with location_container: # REMOVED
+    #     location_data = components.html(...) # REMOVED
+    # if location_data: # REMOVED
+    #     location_container.write(f"**Location:** {location_data}") # REMOVED
+    #     responses["current_location"] = location_data # REMOVED
+    # else: # REMOVED
+    #     location_container.write("Requesting location...") # REMOVED
+    #     responses["current_location"] = "Location not obtained" # REMOVED
+    # --- End Geolocation Display and Capture (REMOVED) ---
 
     for question_key in questions:
         # Use the translated label for the question
@@ -592,31 +520,47 @@ with st.form("questionnaire_form"):
             )
 
         # List of general Yes/No questions (English keys)
-        yes_no_questions_general = ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "97", "100", "102", "103"]
-        # Handle specific exceptions for Gujarati (where some of these might be numeric)
+        yes_no_questions_general = ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "98", "99", "100", "101", "102", "103"] # Added 96, 98, 99, 101 to general list
+        
+        # Handle specific exceptions for Gujarati (where some of these might be numeric or text)
         if language == "Gujarati":
-            if question_key == "96": # "Any wage difference for Men and Women workers (Y/N)" becomes a text input in Gujarati based on the translation provided (though it should be yes/no conceptually)
+            # For Gujarati, some questions which are Y/N in English might not be Y/N in the provided Gujarati translation
+            # We explicitly check for (હા/ના) in the Gujarati label to determine if it's a Yes/No selectbox
+            if question_key in yes_no_questions_general and labels[question_key].endswith("(હા/ના)"):
+                responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
+            # Specific cases where the Gujarati translation suggests a text or different input
+            elif question_key == "46": # "બાયો-ખત/ખાદનો ડોઝ વપરાય છે/એકર" (Dosage of bio-fertilizer/manure used/acre) is a number.
+                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            elif question_key == "54": # "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા" (No. of irrigation required for organic cotton) is a number.
+                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            elif question_key == "55": # "વપરાયેલી સિંચાઈ પદ્ધતિ" (Irrigation method used) is a selectbox as defined globally.
+                 responses[question_key] = st.selectbox(
+                    question_text,
+                    [
+                        "Drip irrigation", "Sprinkler irrigation", "Flood irrigation",
+                        "Ridge and Furrow Irrigation", "Other",
+                    ],
+                    key=f"question_{question_key}",
+                )
+            elif question_key == "57": # "મશીનરી ભાડે લેવાનો ખર્ચ (રૂ.)/એકર" (Cost of machinery hiring (Rs.)/acre) is a number.
+                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            elif question_key == "61": # "વીણીના સમયે જરૂરી કામદારોની સંખ્યા/એકર" (No. of workers required during harvesting/acre) is a number.
+                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            elif question_key == "86": # "દર એકર પાક વીમાનો ખર્ચ" (Cost of crop insurance per acre) is a number.
+                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            elif question_key == "92": # "કૂવા કે બોરવેલના પંપની ક્ષમતા (એચપીમાં)" (Capacity of pump (in HP)) is a number.
+                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            elif question_key == "95": # "કામદારને ચૂકવણીની પદ્ધતિ (રોકડા/ઓનલાઇન)" (Mode of payment to workers (cash/online)) is a text input for now.
                 responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
-            # Ensure "99" (earlier in Gujarati dict) and "100" are handled as Yes/No
-            elif question_key in ["96", "98", "99", "100", "101", "102", "103"]: # Adjusted for Gujarati specific translations
-                 if labels[question_key].endswith("(હા/ના)") or labels[question_key].endswith("છે"): # Check for (Y/N) indicator in Gujarati
-                    responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-                 else:
-                     # Default to text input for cases where it's not explicitly Yes/No
-                     responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
-            else: # For other questions that are in the general list but not exceptional in Gujarati
-                if question_key in yes_no_questions_general:
-                    responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-                else: # Default for any other question not caught by specific logic
-                    responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+            else: # Default to text input for other Gujarati questions that are not explicitly defined or numeric
+                responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+
         elif question_key in yes_no_questions_general:
-            responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-        # Added specific Yes/No question for 96 in English, Hindi, Marathi where it is Y/N
-        elif question_key == "96" and language in ["English", "Hindi", "Marathi"]:
-             responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-
-
-        elif question_key == "55":  # Irrigation method
+            responses[question_key] = st.selectbox(
+                question_text, ["Yes", "No"], key=f"question_{question_key}"
+            )
+        
+        elif question_key == "55":  # Irrigation method - handled outside general Yes/No for specific options
             responses[question_key] = st.selectbox(
                 question_text,
                 [
@@ -647,11 +591,11 @@ with st.form("questionnaire_form"):
         elif question_key in ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]:
             responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
 
-        # Handling "Other" for 4 (Gender)
-        elif question_key == "4" and responses.get(question_key) == "Others":
-            responses["others_gender"] = st.text_input(
-                "If selected Others, please specify:", key="others_gender_specify"
-            )
+        # Handling "Other" for 4 (Gender) - This logic moved to just after the selectbox itself to be more direct.
+        # It's better to manage nested questions right after their parent question in Streamlit forms.
+        # This part of the logic is now within the if question_key == "4": block.
+        # elif question_key == "4" and responses.get(question_key) == "Others": # This would cause an error as responses[question_key] is only set AFTER this loop in previous versions
+        #    responses["others_gender"] = st.text_input("If selected Others, please specify:", key="others_gender_specify")
 
         else:
             # Default to a text input for all other questions
@@ -680,34 +624,29 @@ if submitted:
     required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
     
     for field in required_fields:
-        # Check for empty string, None, or if it's a number, ensure it's not 0 if 0 is not a valid input for that specific field
-        # For simplicity, we are checking for general emptiness, assuming 0 might be valid for some numeric fields.
-        # If 0 is NOT valid for any specific required numeric field, you'd need to add a more specific check.
-        if responses.get(field) is None or responses.get(field) == "" or (isinstance(responses.get(field), (int, float)) and responses.get(field) == 0 and field in ["34", "37", "39", "41", "42"]):
+        if responses.get(field) is None or responses.get(field) == "" or \
+           (isinstance(responses.get(field), (int, float)) and responses.get(field) == 0 and field in ["34", "37", "39", "41", "42"]):
             st.error(f"Field '{labels[field]}' is required.")
             has_validation_error = True
 
-    if not has_validation_error: # Only proceed if required fields are filled
+    if not has_validation_error:
         # Validate phone number
-        phone_number = str(responses.get("3", "")).strip() # Ensure it's a string and strip whitespace
+        phone_number = str(responses.get("3", "")).strip()
         if not phone_number.isdigit() or len(phone_number) != 10:
             st.error("Mobile no. must be exactly 10 digits.")
             has_validation_error = True
             
-    if not has_validation_error: # Only proceed if phone number is valid
+    if not has_validation_error:
         # Validate other numeric fields, ensuring they are non-negative.
         numeric_fields_to_validate_non_negative = ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]
 
         for field in numeric_fields_to_validate_non_negative:
             try:
-                # Streamlit's number_input ensures it's a number, but check for negative values
                 if responses.get(field) is not None and float(responses.get(field)) < 0:
                     st.error(f"Field '{labels[field]}' must be a non-negative number.")
                     has_validation_error = True
                     break
             except (ValueError, TypeError):
-                # This case should ideally not be hit if st.number_input is used correctly,
-                # but it's a good safeguard.
                 st.error(f"Field '{labels[field]}' must be a valid number.")
                 has_validation_error = True
                 break
@@ -744,20 +683,20 @@ if submitted:
         for k, v in responses.items():
             if k in labels: # Use translated label for questionnaire data
                 final_data[labels[k]] = v
-            else: # For special keys like 'surveyor_name', 'current_location', 'uploaded_photo_filename'
+            else: # For special keys like 'surveyor_name', 'uploaded_photo_filename'
                 if k == "surveyor_name":
                     final_data["Surveyor Name"] = v
-                elif k == "current_location":
-                    final_data["Current Location"] = v
                 elif k == "uploaded_photo_filename":
                     final_data["Uploaded Photo"] = v # Add the filename to the CSV
+        
+        # REMOVED: final_data["Current Location"] = responses.get("current_location", "Not available")
 
         # Add the timestamp to the data
         final_data["Submission Timestamp"] = current_timestamp
 
         now = datetime.datetime.now()
         filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-        df = pd.DataFrame([final_data]) # Wrap final_data in a list to create a single-row DataFrame
+        df = pd.DataFrame([final_data])
         
         try:
             df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
