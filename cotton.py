@@ -4,8 +4,7 @@ import datetime
 import os
 import io
 from PIL import Image
-import zipfile # Import the zipfile module
-# import streamlit.components.v1 as components # REMOVED: Not needed without geolocation component
+import zipfile
 
 # Set the directory to save responses
 SAVE_DIR = "responses"
@@ -17,11 +16,6 @@ os.makedirs(PHOTOS_DIR, exist_ok=True)
 
 st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
 st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
-
-# --- Geolocation Component (REMOVED) ---
-# Define the HTML and JavaScript for getting location
-# geolocation_js = """ ... """ # REMOVED
-# --- End Geolocation Component (REMOVED) ---
 
 
 language = st.selectbox(
@@ -200,16 +194,16 @@ dict_translations = {
         "62": "कटाई का समय (1st, 2nd और 3rd पिकिंग) (महीना)",
         "63": "खरपतवार विधि का उपयोग किया गया (मैनुअल/मैकेनिकल)",
         "64": "खरपतवार लागत/एकड़",
-        "65": "पलवार लागत/एकड़",
+        "65": "पलवार लागत/एकर",
         "66": "जुताई का अभ्यास किया गया",
         "67": "जुताई लागत/एकड़",
         "68": "भूमि तैयारी लागत/एकड़",
-        "69": "सेंद्रिय कापसाचा बियाणे दर/एकर", # This seems to be Marathi, not Hindi
-        "70": "सेंद्रिय कपास बियाण्याची जात (नाव)", # This seems to be Marathi, not Hindi
-        "71": "उपयोग केलेल्या बॉर्डर पिकाचे नाव", # This seems to be Marathi, not Hindi
-        "72": "उपयोग केलेल्या आंतरपिकाचे नाव", # This seems to be Marathi, not Hindi
-        "73": "कवर पाकाचे नाव", # This seems to be Marathi, not Hindi
-        "74": "ट्रैप फसलाचे नाव", # This seems to be Marathi, not Hindi
+        "69": "सेंद्रिय कापसाचा बियाणे दर/एकर",
+        "70": "सेंद्रिय कपास बियाण्याची जात (नाव)",
+        "71": "उपयोग केलेल्या बॉर्डर पिकाचे नाव",
+        "72": "उपयोग केलेल्या आंतरपिकाचे नाव",
+        "73": "कवर पाकाचे नाव",
+        "74": "ट्रैप फसलाचे नाव",
         "75": "आच्छादन का उपयोग किया गया (हाँ/नहीं)",
         "76": "आच्छादन के प्रकार का उपयोग किया गया (जैव-प्लास्टिक/हरा/सूखा)",
         "77": "भंडारण के दौरान क्या सावधानियां बरती जाती हैं",
@@ -453,7 +447,7 @@ dict_translations = {
 }
 
 # Define the questions using the keys from the dictionary
-questions = [str(i) for i in range(1, 104)]  # Create a list of strings from "1" to "103"
+questions = [str(i) for i in range(1, 104)] # Create a list of strings from "1" to "103"
 
 # Get the translations for the selected language
 labels = dict_translations.get(language, dict_translations["English"])
@@ -475,109 +469,47 @@ with st.form("questionnaire_form"):
 
     responses["surveyor_name"] = st.text_input(surveyor_name_label, key="surveyor_name_input")
 
-    # --- Geolocation Display and Capture (REMOVED) ---
-    # st.subheader("Current Location") # REMOVED
-    # location_container = st.container() # REMOVED
-    # with location_container: # REMOVED
-    #     location_data = components.html(...) # REMOVED
-    # if location_data: # REMOVED
-    #     location_container.write(f"**Location:** {location_data}") # REMOVED
-    #     responses["current_location"] = location_data # REMOVED
-    # else: # REMOVED
-    #     location_container.write("Requesting location...") # REMOVED
-    #     responses["current_location"] = "Location not obtained" # REMOVED
-    # --- End Geolocation Display and Capture (REMOVED) ---
+    # --- INPUT FIELD RENDERING LOGIC ---
+    # Define which questions are numbers, selectboxes, or special inputs globally for clarity
+    numeric_questions = ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]
+    
+    yes_no_questions = ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "98", "99", "100", "101", "102", "103"]
+
+    irrigation_source_options = [
+        "Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated",
+    ]
+    irrigation_method_options = [
+        "Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other",
+    ]
+    weeding_method_options = ["Manual", "Mechanical", "Both", "Other"]
+
 
     for question_key in questions:
-        # Use the translated label for the question
-        question_text = labels.get(
-            question_key, f"Question {question_key} (No translation)"
-        )
-
-        # Define dropdown options for specific questions
+        question_text = labels.get(question_key, f"Question {question_key} (No translation)")
+        
+        # Specific overrides for question types based on key
         if question_key == "4":  # Gender
             responses[question_key] = st.selectbox(
                 question_text, ["Male", "Female", "Others"], key=f"question_{question_key}"
             )
             if responses[question_key] == "Others":
                 responses["others_gender"] = st.text_input(
-                    "If selected Others, please specify:", key="others_gender"
+                    "If selected Others, please specify:", key="others_gender_specify"
                 )
-
+        
         elif question_key == "24":  # Source of irrigation
             responses[question_key] = st.selectbox(
-                question_text,
-                [
-                    "Canal",
-                    "Well",
-                    "Borewell",
-                    "River",
-                    "Farm Pond",
-                    "Community Pond",
-                    "Rain-fed not irrigated",
-                ],
-                key=f"question_{question_key}",
+                question_text, irrigation_source_options, key=f"question_{question_key}"
             )
 
-        # List of general Yes/No questions (English keys)
-        yes_no_questions_general = ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "98", "99", "100", "101", "102", "103"] # Added 96, 98, 99, 101 to general list
-        
-        # Handle specific exceptions for Gujarati (where some of these might be numeric or text)
-        if language == "Gujarati":
-            # For Gujarati, some questions which are Y/N in English might not be Y/N in the provided Gujarati translation
-            # We explicitly check for (હા/ના) in the Gujarati label to determine if it's a Yes/No selectbox
-            if question_key in yes_no_questions_general and labels[question_key].endswith("(હા/ના)"):
-                responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-            # Specific cases where the Gujarati translation suggests a text or different input
-            elif question_key == "46": # "બાયો-ખત/ખાદનો ડોઝ વપરાય છે/એકર" (Dosage of bio-fertilizer/manure used/acre) is a number.
-                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-            elif question_key == "54": # "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા" (No. of irrigation required for organic cotton) is a number.
-                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-            elif question_key == "55": # "વપરાયેલી સિંચાઈ પદ્ધતિ" (Irrigation method used) is a selectbox as defined globally.
-                 responses[question_key] = st.selectbox(
-                    question_text,
-                    [
-                        "Drip irrigation", "Sprinkler irrigation", "Flood irrigation",
-                        "Ridge and Furrow Irrigation", "Other",
-                    ],
-                    key=f"question_{question_key}",
-                )
-            elif question_key == "57": # "મશીનરી ભાડે લેવાનો ખર્ચ (રૂ.)/એકર" (Cost of machinery hiring (Rs.)/acre) is a number.
-                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-            elif question_key == "61": # "વીણીના સમયે જરૂરી કામદારોની સંખ્યા/એકર" (No. of workers required during harvesting/acre) is a number.
-                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-            elif question_key == "86": # "દર એકર પાક વીમાનો ખર્ચ" (Cost of crop insurance per acre) is a number.
-                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-            elif question_key == "92": # "કૂવા કે બોરવેલના પંપની ક્ષમતા (એચપીમાં)" (Capacity of pump (in HP)) is a number.
-                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-            elif question_key == "95": # "કામદારને ચૂકવણીની પદ્ધતિ (રોકડા/ઓનલાઇન)" (Mode of payment to workers (cash/online)) is a text input for now.
-                responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
-            else: # Default to text input for other Gujarati questions that are not explicitly defined or numeric
-                responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
-
-        elif question_key in yes_no_questions_general:
+        elif question_key == "55":  # Irrigation method
             responses[question_key] = st.selectbox(
-                question_text, ["Yes", "No"], key=f"question_{question_key}"
-            )
-        
-        elif question_key == "55":  # Irrigation method - handled outside general Yes/No for specific options
-            responses[question_key] = st.selectbox(
-                question_text,
-                [
-                    "Drip irrigation",
-                    "Sprinkler irrigation",
-                    "Flood irrigation",
-                    "Ridge and Furrow Irrigation",
-                    "Other",
-                ],
-                key=f"question_{question_key}",
+                question_text, irrigation_method_options, key=f"question_{question_key}"
             )
             
-        elif question_key == "63": # Weeding method used (manual/mechanical)
+        elif question_key == "63": # Weeding method used
             responses[question_key] = st.selectbox(
-                question_text,
-                ["Manual", "Mechanical", "Both", "Other"],
-                key=f"question_{question_key}"
+                question_text, weeding_method_options, key=f"question_{question_key}"
             )
 
         elif question_key == "62":  # Harvesting time
@@ -586,17 +518,26 @@ with st.form("questionnaire_form"):
                 placeholder="e.g., month 1, month 2, month 3",
                 key=f"question_{question_key}",
             )
+        
+        # Handle Yes/No questions (with specific Gujarati adjustments)
+        elif question_key in yes_no_questions:
+            # Gujarati specific logic for Yes/No, as some translations don't end with (હા/ના)
+            if language == "Gujarati" and question_key in ["96", "97", "98", "99", "100", "101"]:
+                 # These specific Gujarati questions are meant to be Yes/No, despite translation phrasing.
+                responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
+            # The general check for (હા/ના) is useful for others in Gujarati, and all other languages.
+            elif language == "Gujarati" and labels[question_key].endswith("(હા/ના)"):
+                 responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
+            elif language != "Gujarati": # All other languages use Yes/No for these
+                responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
+            else: # Fallback for Gujarati questions that are in yes_no_questions_general but not marked as Y/N
+                  # (This should ideally not be hit if translations are consistent)
+                responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
 
-        # Use st.number_input for all numeric fields
-        elif question_key in ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]:
+        # Handle Numeric questions
+        elif question_key in numeric_questions:
             responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-
-        # Handling "Other" for 4 (Gender) - This logic moved to just after the selectbox itself to be more direct.
-        # It's better to manage nested questions right after their parent question in Streamlit forms.
-        # This part of the logic is now within the if question_key == "4": block.
-        # elif question_key == "4" and responses.get(question_key) == "Others": # This would cause an error as responses[question_key] is only set AFTER this loop in previous versions
-        #    responses["others_gender"] = st.text_input("If selected Others, please specify:", key="others_gender_specify")
-
+        
         else:
             # Default to a text input for all other questions
             responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
@@ -638,6 +579,7 @@ if submitted:
             
     if not has_validation_error:
         # Validate other numeric fields, ensuring they are non-negative.
+        # This list should ideally match the `numeric_questions` list defined earlier.
         numeric_fields_to_validate_non_negative = ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]
 
         for field in numeric_fields_to_validate_non_negative:
@@ -689,8 +631,6 @@ if submitted:
                 elif k == "uploaded_photo_filename":
                     final_data["Uploaded Photo"] = v # Add the filename to the CSV
         
-        # REMOVED: final_data["Current Location"] = responses.get("current_location", "Not available")
-
         # Add the timestamp to the data
         final_data["Submission Timestamp"] = current_timestamp
 
@@ -706,12 +646,16 @@ if submitted:
             st.error(f"Error saving survey data: {e}")
 
 
-# Admin Real-Time Access
-st.divider()
-st.header("🔐 Admin Real-Time Access")
+---
 
-# Allowed Admin Emails
-ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org", "rsomanchi@tns.org", "mkaushal@tns.org", "ksuneha@tns.org"]
+# Admin Real-Time Access
+
+**🔐 Admin Real-Time Access**
+
+---
+
+**Allowed Admin Emails** are: `shifalis@tns.org`, `rmukherjee@tns.org`, `rsomanchi@tns.org`, `mkaushal@tns.org`, `ksuneha@tns.org`.
+
 admin_email = st.text_input("Enter your Admin Email to unlock extra features:", key="admin_email_input")
 
 if admin_email in ALLOWED_EMAILS:
@@ -743,13 +687,15 @@ if admin_email in ALLOWED_EMAILS:
                 except Exception as e:
                     st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
 
-            # --- Download All Photos Button ---
-            st.markdown("---")
-            st.subheader("Download All Photos")
+            ---
+
+            **Download All Photos**
+
+            ---
             
             # Create a BytesIO object to store the zip file in memory
             zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file: # Changed 'a' to 'w' for fresh zip creation
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                 for img_file in image_files:
                     img_path = os.path.join(PHOTOS_DIR, img_file)
                     zip_file.write(img_path, os.path.basename(img_path))
@@ -759,7 +705,7 @@ if admin_email in ALLOWED_EMAILS:
             
             st.download_button(
                 label="⬇️ Download All Photos as ZIP",
-                data=zip_buffer.getvalue(), # Get the value from the BytesIO object
+                data=zip_buffer.getvalue(),
                 file_name="all_photos.zip",
                 mime="application/zip",
             )
