@@ -4,7 +4,7 @@ import datetime
 import os
 import io
 from PIL import Image
-import zipfile
+import zipfile # Import the zipfile module
 
 # Set the directory to save responses
 SAVE_DIR = "responses"
@@ -182,7 +182,7 @@ dict_translations = {
         "50": "नीले चिपचिपे जाल का उपयोग / एकड़",
         "51": "प्रति नीले चिपचिपे जाल लागत",
         "52": "पक्षी पर्च का उपयोग / एकड़",
-        "53": "सिंचाई लागत/एकड़",
+        "53": "सिंचाई लागत/एकर",
         "54": "जैविक कपास के लिए आवश्यक सिंचाई की संख्या",
         "55": "सिंचाई विधि का उपयोग किया गया",
         "56": "क्या कोई कृषि मशीनरी किराए पर ली गई है (हाँ/नहीं)",
@@ -522,21 +522,26 @@ with st.form("questionnaire_form"):
         # Handle Yes/No questions (with specific Gujarati adjustments)
         elif question_key in yes_no_questions:
             # Gujarati specific logic for Yes/No, as some translations don't end with (હા/ના)
-            if language == "Gujarati" and question_key in ["96", "97", "98", "99", "100", "101"]:
-                 # These specific Gujarati questions are meant to be Yes/No, despite translation phrasing.
+            # These specific Gujarati questions are meant to be Yes/No, despite translation phrasing.
+            # I've included a comprehensive list here based on the English keys.
+            if language == "Gujarati" and question_key in ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "98", "99", "100", "101", "102", "103"]:
                 responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-            # The general check for (હા/ના) is useful for others in Gujarati, and all other languages.
-            elif language == "Gujarati" and labels[question_key].endswith("(હા/ના)"):
-                 responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-            elif language != "Gujarati": # All other languages use Yes/No for these
+            # All other languages use Yes/No for these
+            elif language != "Gujarati":
                 responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-            else: # Fallback for Gujarati questions that are in yes_no_questions_general but not marked as Y/N
-                  # (This should ideally not be hit if translations are consistent)
+            else: # Fallback for Gujarati questions that might be in yes_no_questions_general but not marked as Y/N
+                  # (This should ideally not be hit if all 'yes_no_questions' are handled above for Gujarati)
                 responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+
 
         # Handle Numeric questions
         elif question_key in numeric_questions:
-            responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
+            # Added a specific check for Gujarati question 95 (Mode of payment) which was a number input in old logic, but is text
+            # This ensures that if 95 comes here, it still gets number_input for other languages
+            if language == "Gujarati" and question_key == "95": # As per the Gujarati translation, 95 is "Mode of payment to workers (cash/online)" which should be text
+                responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+            else:
+                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
         
         else:
             # Default to a text input for all other questions
@@ -580,15 +585,20 @@ if submitted:
     if not has_validation_error:
         # Validate other numeric fields, ensuring they are non-negative.
         # This list should ideally match the `numeric_questions` list defined earlier.
-        numeric_fields_to_validate_non_negative = ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]
-
-        for field in numeric_fields_to_validate_non_negative:
+        # Note: If a question is in numeric_questions but you forced it to text_input for Gujarati
+        # (like Q95), then it won't be caught by this numeric validation anyway, which is correct.
+        for field in numeric_questions: # Using the global numeric_questions list for validation
+            # Skip if the response for this field is already determined to be non-numeric (e.g., Q95 for Gujarati)
+            if field == "95" and language == "Gujarati":
+                continue 
+            
             try:
                 if responses.get(field) is not None and float(responses.get(field)) < 0:
                     st.error(f"Field '{labels[field]}' must be a non-negative number.")
                     has_validation_error = True
                     break
             except (ValueError, TypeError):
+                # This could happen if a numeric field somehow gets non-numeric input despite st.number_input
                 st.error(f"Field '{labels[field]}' must be a valid number.")
                 has_validation_error = True
                 break
@@ -646,16 +656,13 @@ if submitted:
             st.error(f"Error saving survey data: {e}")
 
 
----
-
 # Admin Real-Time Access
+st.divider()
+st.header("Admin Real-Time Access") # Fixed: Removed emoji
+st.markdown("---") # Added markdown line for visual separation
 
-**🔐 Admin Real-Time Access**
-
----
-
-**Allowed Admin Emails** are: `shifalis@tns.org`, `rmukherjee@tns.org`, `rsomanchi@tns.org`, `mkaushal@tns.org`, `ksuneha@tns.org`.
-
+# Allowed Admin Emails
+ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org", "rsomanchi@tns.org", "mkaushal@tns.org", "ksuneha@tns.org"]
 admin_email = st.text_input("Enter your Admin Email to unlock extra features:", key="admin_email_input")
 
 if admin_email in ALLOWED_EMAILS:
@@ -687,11 +694,8 @@ if admin_email in ALLOWED_EMAILS:
                 except Exception as e:
                     st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
 
-            ---
-
-            **Download All Photos**
-
-            ---
+            st.markdown("---") # Added markdown line for visual separation
+            st.subheader("Download All Photos") # Using subheader for consistency
             
             # Create a BytesIO object to store the zip file in memory
             zip_buffer = io.BytesIO()
