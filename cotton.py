@@ -4,7 +4,7 @@ import datetime
 import os
 import io
 from PIL import Image
-import zipfile # Import the zipfile module
+import zipfile
 
 # Set the directory to save responses
 SAVE_DIR = "responses"
@@ -17,7 +17,7 @@ os.makedirs(PHOTOS_DIR, exist_ok=True)
 st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
 st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
 
-
+# --- Language Selection ---
 language = st.selectbox(
     "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
     ["English", "Hindi", "Marathi", "Gujarati"],
@@ -303,14 +303,14 @@ dict_translations = {
         "66": "किती वेळा नांगरणी केली",
         "67": "नांगरणी खर्च/एकर",
         "68": "जमीन तयार करण्याचा खर्च/एकर",
-        "69": "सेंद्रिय बियाण्याचा दर/एकर", # Corrected translation
-        "70": "सेंद्रिय कापसाच्या बियाण्याची जात (नाव)", # Corrected translation
-        "71": "वापरलेल्या बॉर्डर पिकाचे नाव", # Corrected translation
-        "72": "वापरलेल्या आंतरपिकाचे नाव", # Corrected translation
-        "73": "कव्हर पिकाचे नाव", # Corrected translation
-        "74": "ट्रॅप पिकाचे नाव", # Corrected translation
+        "69": "सेंद्रिय बियाण्याचा दर/एकर",  # Corrected translation
+        "70": "सेंद्रिय कापसाच्या बियाण्याची जात (नाव)",  # Corrected translation
+        "71": "वापरलेल्या बॉर्डर पिकाचे नाव",  # Corrected translation
+        "72": "वापरलेल्या आंतरपिकाचे नाव",  # Corrected translation
+        "73": "कवर पिकाचे नाव",  # Corrected translation
+        "74": "ट्रॅप पिकाचे नाव",  # Corrected translation
         "75": "मल्चिंग वापरले (होय/नाही)",
-        "76": "वापरलेल्या मल्चिंगचा प्रकार (जैव-प्लास्टिक/हिरवा/कोरडा)", # Corrected translation
+        "76": "वापरलेल्या मल्चिंगचा प्रकार (जैव-प्लास्टिक/हिरवा/कोरडा)",  # Corrected translation
         "77": "साठवणुकीदरम्यान कोणती खबरदारी घेतली जाते",
         "78": "बीज कपासाच्या वाहतुकीसाठी भाड्याचे वाहन वापरले (होय/नाही)",
         "79": "वाहतूक खर्च (रु.)/बीज कपासाचे किलो",
@@ -327,7 +327,7 @@ dict_translations = {
         "90": "परिभ्रमणासाठी वापरलेली पिके",
         "91": "कोणतेही जल ट्रॅकिंग उपकरण वापरत आहात (होय/नाही)",
         "92": "पंपाची क्षमता (एचपी मध्ये)",
-        "93": "बफर झोन राखणे (होय/नाही)", # Corrected translation
+        "93": "बफर झोन राखणे (होय/नाही)",  # Corrected translation
         "94": "पीक अवशेषांचा वापर (इंधन/जनावरांचे खाद्य/बायोचार/इन-सीटू कंपोस्टिंग/जाळणे)",
         "95": "कामगारांना देयकाची पद्धत (रोख/ऑनलाइन)",
         "96": "पुरुष आणि महिला कामगारांसाठी कोणताही वेतन तफावत (होय/नाही)",
@@ -337,7 +337,7 @@ dict_translations = {
         "100": "कामगारांसाठी शौचालयाची कोणतीही तरतूद",
         "101": "कृषी कार्यांमध्ये कुटुंबातील सदस्यांना (महिलांना) सामील करणे",
         "102": "कोणतीही सामुदायिक जल संचयन रचना (होय/नाही)",
-        "103": "मातीतील ओलावा मीटरचा वापर (होय/नाही)", # Corrected translation
+        "103": "मातीतील ओलावा मीटरचा वापर (होय/नाही)",  # Corrected translation
     },
     "Gujarati": {
         "1": "ખેડૂત ટ્રેસનેટ કોડ",
@@ -389,22 +389,22 @@ dict_translations = {
         "47": "ખર્ચ પ્રતિ ફેરોમોન ટ્રેપ",
         "48": "પીળા સ્ટીકી ટ્રેપનો ઉપયોગ / એકર",
         "49": "ખર્ચ પ્રતિ પીળો સ્ટીકી ટ્રેપ",
-        "50": "વાદળી સ્ટીકી ટ્રેપનો ઉપયોગ / એકર", # Corrected translation
+        "50": "વાદળી સ્ટીકી ટ્રેપનો ઉપયોગ / એકર",  # Corrected translation
         "51": "ખર્ચ પ્રતિ વાદળી સ્ટીકી ટ્રેપ",
         "52": "પક્ષી સ્ટેન્ડનો ઉપયોગ પ્રતિ એકર",
         "53": "સિંચાઈ ખર્ચ/એકર",
-        "54": "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા", # Corrected translation
-        "55": "વપરાયેલી સિંચાઈ પદ્ધતિ", # Corrected translation
+        "54": "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા",  # Corrected translation
+        "55": "વપરાયેલી સિંચાઈ પદ્ધતિ",  # Corrected translation
         "56": "કોઈપણ ખેતી મશીનરી ભાડે લીધી છે (હા/ના)",
-        "57": "મશીનરી ભાડે લેવાનો ખર્ચ (રૂ.)/એકર", # Corrected translation
+        "57": "મશીનરી ભાડે લેવાનો ખર્ચ (રૂ.)/એકર",  # Corrected translation
         "58": "સ્થાનિક મજૂરી ખર્ચ પ્રતિ દિવસ",
         "59": "સ્થળાંતરિત મજૂરી ખર્ચ પ્રતિ દિવસ",
         "60": "વાવણીના સમયે જરૂરી કામદારોની સંખ્યા/એકર",
-        "61": "વીણીના સમયે જરૂરી કામદારોની સંખ્યા/એકર", # Corrected translation
+        "61": "વીણીના સમયે જરૂરી કામદારોની સંખ્યા/એકર",  # Corrected translation
         "62": "વીણી સમય (1 લી, 2 જી અને 3 જી વીણીનો મહિનો)",
         "63": "નિંદામણ પદ્ધતિનો પ્રકાર (હાથ વડે /સાધન દ્વારા)",
         "64": "નિંદામણ ખર્ચ/એકર",
-        "65": "મલ્ચિંગ ખર્ચ/એકર", # Corrected translation
+        "65": "મલ્ચિંગ ખર્ચ/એકર",  # Corrected translation
         "66": "કેટલી વખત ખેડ કરો છો",
         "67": "ખેડ ખર્ચ/એકર",
         "68": "જમીન તૈયારી ખર્ચ/એકર",
@@ -420,24 +420,24 @@ dict_translations = {
         "78": "વીણી કરેલા કપાસના પરિવહન માટે ભાડે લીધેલ વાહન વપરાય છે (હા/ના)",
         "79": "પરિવહન ખર્ચ રૂપિયા/કિલો",
         "80": "દૂષણ/અશુદ્ધિઓને કારણે કોઈપણ જથ્થાનો અસ્વીકાર (કિલો)",
-        "81": "કપાસના ભાવ જાણવાની રીત", # Corrected translation
+        "81": "કપાસના ભાવ જાણવાની રીત",  # Corrected translation
         "82": "ચુકવણી વ્યવહારનો પ્રકાર (રોકડા/ઓનલાઇન)",
         "83": "વેચાણ કર્યા પછી કેટલા દિવસોમાં રૂપીયા મળે છે",
         "84": "કોઈપણ સરકારી યોજના અથવા સબસીડીનો લાભ મળે છે (હા/ના)",
         "85": "પાક વીમો ઉતારો છો (હા/ના)",
-        "86": "દર એકર પાક વીમાનો ખર્ચ", # Corrected translation (this was duplicated)
+        "86": "દર એકર પાક વીમાનો ખર્ચ",  # Corrected translation (this was duplicated)
         "87": "કિશાન ક્રેડિટ કાર્ડ છે (હા/ના)",
-        "88": "સક્રિય બેંક ખાતું છે (હા/ના)", # Corrected translation
+        "88": "સક્રિય બેંક ખાતું છે (હા/ના)",  # Corrected translation
         "89": "પાક ફેરબદલી કરો છો (હા/ના)",
         "90": "પાક ફેરબદલી માટે વપરાતા પાક",
-        "91": "કોઈપણ પાણી ટ્રેકિંગ ઉપકરણોનો ઉપયોગ કરો છો (હા/ના)", # Corrected translation
+        "91": "કોઈપણ પાણી ટ્રેકિંગ ઉપકરણોનો ઉપયોગ કરો છો (હા/ના)",  # Corrected translation
         "92": "કૂવા કે બોરવેલના પંપની ક્ષમતા (એચપીમાં)",
         "93": "બફર ઝોન જાળવો છો (હા/ના)",
         "94": "પાકના અવશેષોનો ઉપયોગ (બળતણ/પશુઓનો ખોરાક/બાયોચાર/જમીનમાં ભેળવવું/સળગાવવું/કંપોસ્ટ)",
         "95": "કામદારને ચૂકવણીની પદ્ધતિ (રોકડા/ઓનલાઇન)",
-        "96": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)", # This was incorrectly set to number_input in original logic
-        "99": "કામદારો માટે આશ્રય અને સુરક્ષિત પીવાના પાણીની કોઈ જોગવાઈ", # Reordered this from original to maintain numerical order
-        "97": "કોઈ શ્રમ રજીસ્ટરનો ઉપયોગ કરી રહ્યા છો (હા/ના)", # Reordered this from original to maintain numerical order
+        "96": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)",  # This was incorrectly set to number_input in original logic
+        "99": "કામદારો માટે આશ્રય અને સુરક્ષિત પીવાના પાણીની કોઈ જોગવાઈ",  # Reordered this from original to maintain numerical order
+        "97": "કોઈ શ્રમ રજીસ્ટરનો ઉપયોગ કરી રહ્યા છો (હા/ના)",  # Reordered this from original to maintain numerical order
         "98": "કામદારો માટે સલામતી-કીટ/પ્રાથમિક સારવારની કોઈપણ વ્યવસ્થા",
         "100": "કામદારો માટે શૌચાલયની કોઈ જોગવાઈ",
         "101": "ખેતીકામમાં કુટુંબના સભ્યો (મહિલાઓ) ને સામેલ કરો છો",
@@ -447,264 +447,430 @@ dict_translations = {
 }
 
 # Define the questions using the keys from the dictionary
-questions = [str(i) for i in range(1, 104)] # Create a list of strings from "1" to "103"
+questions = [str(i) for i in range(1, 104)]  # Create a list of strings from "1" to "103"
 
 # Get the translations for the selected language
 labels = dict_translations.get(language, dict_translations["English"])
 
-responses = {}
+# --- Input Field Definitions for consistent use across form and review ---
+numeric_questions = ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]
+yes_no_questions = ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "98", "99", "100", "101", "102", "103"]
+irrigation_source_options = ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"]
+irrigation_method_options = ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other"]
+weeding_method_options = ["Manual", "Mechanical", "Both", "Other"]
 
-# Add a photo upload option in the form
-with st.form("questionnaire_form"):
-    # Add surveyor name input at the beginning of the form
-    surveyor_name_label = ""
-    if language == "English":
-        surveyor_name_label = "Surveyor Name"
-    elif language == "Hindi":
-        surveyor_name_label = "सर्वेयर का नाम"
-    elif language == "Marathi":
-        surveyor_name_label = "सर्वेयरचे नाव"
-    elif language == "Gujarati":
-        surveyor_name_label = "સર્વેયરનું નામ"
+# --- Session State Initialization for storing responses and flow control ---
+if 'responses' not in st.session_state:
+    st.session_state.responses = {}
+if 'uploaded_photo_info' not in st.session_state:
+    st.session_state.uploaded_photo_info = None # Stores filename and raw data for review
+if 'form_submitted_for_review' not in st.session_state:
+    st.session_state.form_submitted_for_review = False
+if 'has_validation_error' not in st.session_state:
+    st.session_state.has_validation_error = False
 
-    responses["surveyor_name"] = st.text_input(surveyor_name_label, key="surveyor_name_input")
+# --- Questionnaire Form Section ---
+if not st.session_state.form_submitted_for_review:
+    with st.form("questionnaire_form"):
+        # Surveyor Name
+        surveyor_name_label = ""
+        if language == "English":
+            surveyor_name_label = "Surveyor Name"
+        elif language == "Hindi":
+            surveyor_name_label = "सर्वेयर का नाम"
+        elif language == "Marathi":
+            surveyor_name_label = "सर्वेयरचे नाव"
+        elif language == "Gujarati":
+            surveyor_name_label = "સર્વેયરનું નામ"
 
-    # --- INPUT FIELD RENDERING LOGIC ---
-    # Define which questions are numbers, selectboxes, or special inputs globally for clarity
-    numeric_questions = ["11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37", "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52", "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69", "79", "80", "83", "86", "92"]
-    
-    yes_no_questions = ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "98", "99", "100", "101", "102", "103"]
+        st.session_state.responses["surveyor_name"] = st.text_input(
+            surveyor_name_label,
+            key="surveyor_name_input",
+            value=st.session_state.responses.get("surveyor_name", "") # Persist value
+        )
 
-    irrigation_source_options = [
-        "Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated",
-    ]
-    irrigation_method_options = [
-        "Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other",
-    ]
-    weeding_method_options = ["Manual", "Mechanical", "Both", "Other"]
+        for question_key in questions:
+            question_text = labels.get(question_key, f"Question {question_key} (No translation)")
 
+            # Retrieve existing value for persistence
+            current_value = st.session_state.responses.get(question_key, "")
 
-    for question_key in questions:
-        question_text = labels.get(question_key, f"Question {question_key} (No translation)")
-        
-        # Specific overrides for question types based on key
-        if question_key == "4":  # Gender
-            responses[question_key] = st.selectbox(
-                question_text, ["Male", "Female", "Others"], key=f"question_{question_key}"
-            )
-            if responses[question_key] == "Others":
-                responses["others_gender"] = st.text_input(
-                    "If selected Others, please specify:", key="others_gender_specify"
+            if question_key == "4":  # Gender
+                st.session_state.responses[question_key] = st.selectbox(
+                    question_text,
+                    ["Male", "Female", "Others"],
+                    key=f"question_{question_key}",
+                    index=["Male", "Female", "Others"].index(current_value) if current_value else 0
                 )
-        
-        elif question_key == "24":  # Source of irrigation
-            responses[question_key] = st.selectbox(
-                question_text, irrigation_source_options, key=f"question_{question_key}"
-            )
-
-        elif question_key == "55":  # Irrigation method
-            responses[question_key] = st.selectbox(
-                question_text, irrigation_method_options, key=f"question_{question_key}"
-            )
+                if st.session_state.responses[question_key] == "Others":
+                    st.session_state.responses["others_gender"] = st.text_input(
+                        "If selected Others, please specify:",
+                        key="others_gender_specify",
+                        value=st.session_state.responses.get("others_gender", "")
+                    )
+                else:
+                    st.session_state.responses.pop("others_gender", None) # Remove if not "Others"
             
-        elif question_key == "63": # Weeding method used
-            responses[question_key] = st.selectbox(
-                question_text, weeding_method_options, key=f"question_{question_key}"
-            )
+            elif question_key == "24":  # Source of irrigation
+                st.session_state.responses[question_key] = st.selectbox(
+                    question_text,
+                    irrigation_source_options,
+                    key=f"question_{question_key}",
+                    index=irrigation_source_options.index(current_value) if current_value in irrigation_source_options else 0
+                )
 
-        elif question_key == "62":  # Harvesting time
-            responses[question_key] = st.text_input(
-                question_text,
-                placeholder="e.g., month 1, month 2, month 3",
-                key=f"question_{question_key}",
-            )
-        
-        # Handle Yes/No questions (with specific Gujarati adjustments)
-        elif question_key in yes_no_questions:
-            # Gujarati specific logic for Yes/No, as some translations don't end with (હા/ના)
-            # These specific Gujarati questions are meant to be Yes/No, despite translation phrasing.
-            # I've included a comprehensive list here based on the English keys.
-            if language == "Gujarati" and question_key in ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "98", "99", "100", "101", "102", "103"]:
-                responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-            # All other languages use Yes/No for these
-            elif language != "Gujarati":
-                responses[question_key] = st.selectbox(question_text, ["Yes", "No"], key=f"question_{question_key}")
-            else: # Fallback for Gujarati questions that might be in yes_no_questions_general but not marked as Y/N
-                  # (This should ideally not be hit if all 'yes_no_questions' are handled above for Gujarati)
-                responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+            elif question_key == "55":  # Irrigation method
+                st.session_state.responses[question_key] = st.selectbox(
+                    question_text,
+                    irrigation_method_options,
+                    key=f"question_{question_key}",
+                    index=irrigation_method_options.index(current_value) if current_value in irrigation_method_options else 0
+                )
+                
+            elif question_key == "63": # Weeding method used
+                st.session_state.responses[question_key] = st.selectbox(
+                    question_text,
+                    weeding_method_options,
+                    key=f"question_{question_key}",
+                    index=weeding_method_options.index(current_value) if current_value in weeding_method_options else 0
+                )
 
+            elif question_key == "62":  # Harvesting time
+                st.session_state.responses[question_key] = st.text_input(
+                    question_text,
+                    placeholder="e.g., month 1, month 2, month 3",
+                    key=f"question_{question_key}",
+                    value=current_value
+                )
+                
+            elif question_key in yes_no_questions:
+                # Determine initial index for selectbox
+                default_index = 0 # Default to "Yes" or first option
+                if current_value == "No":
+                    default_index = 1
+                elif current_value == "": # If no value, set to empty string for proper display
+                    current_value = "Yes" # Default to 'Yes' for initial load if no value
 
-        # Handle Numeric questions
-        elif question_key in numeric_questions:
-            # Added a specific check for Gujarati question 95 (Mode of payment) which was a number input in old logic, but is text
-            # This ensures that if 95 comes here, it still gets number_input for other languages
-            if language == "Gujarati" and question_key == "95": # As per the Gujarati translation, 95 is "Mode of payment to workers (cash/online)" which should be text
-                responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+                st.session_state.responses[question_key] = st.selectbox(
+                    question_text,
+                    ["Yes", "No"],
+                    key=f"question_{question_key}",
+                    index=default_index
+                )
+
+            elif question_key in numeric_questions:
+                if language == "Gujarati" and question_key == "95":
+                    st.session_state.responses[question_key] = st.text_input(
+                        question_text,
+                        key=f"question_{question_key}",
+                        value=current_value
+                    )
+                else:
+                    # Convert to float for number_input, handle empty string case
+                    num_val = float(current_value) if isinstance(current_value, (int, float)) or (isinstance(current_value, str) and current_value.replace('.', '', 1).isdigit()) else 0.0
+                    st.session_state.responses[question_key] = st.number_input(
+                        question_text,
+                        min_value=0.0,
+                        format="%.2f",
+                        key=f"question_{question_key}",
+                        value=num_val
+                    )
             else:
-                responses[question_key] = st.number_input(question_text, min_value=0.0, format="%.2f", key=f"question_{question_key}")
-        
-        else:
-            # Default to a text input for all other questions
-            responses[question_key] = st.text_input(question_text, key=f"question_{question_key}")
+                st.session_state.responses[question_key] = st.text_input(
+                    question_text,
+                    key=f"question_{question_key}",
+                    value=current_value
+                )
 
-    # Add file uploader for photo upload
-    uploaded_photo = st.file_uploader(
-        "Upload a photo (optional):",
-        type=["jpg", "jpeg", "png"],
-        key="uploaded_photo",
-    )
-    
-    # Submit Button
-    submitted = st.form_submit_button("Submit")
-
-# Handle the uploaded photo
-if submitted:
-    has_validation_error = False # Initialize the flag
-
-    # Validate surveyor name
-    if not responses.get("surveyor_name"):
-        st.error("Surveyor Name is required.")
-        has_validation_error = True
-
-    # Validate required fields
-    required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
-    
-    for field in required_fields:
-        if responses.get(field) is None or responses.get(field) == "" or \
-           (isinstance(responses.get(field), (int, float)) and responses.get(field) == 0 and field in ["34", "37", "39", "41", "42"]):
-            st.error(f"Field '{labels[field]}' is required.")
-            has_validation_error = True
-
-    if not has_validation_error:
-        # Validate phone number
-        phone_number = str(responses.get("3", "")).strip()
-        if not phone_number.isdigit() or len(phone_number) != 10:
-            st.error("Mobile no. must be exactly 10 digits.")
-            has_validation_error = True
-            
-    if not has_validation_error:
-        # Validate other numeric fields, ensuring they are non-negative.
-        # This list should ideally match the `numeric_questions` list defined earlier.
-        # Note: If a question is in numeric_questions but you forced it to text_input for Gujarati
-        # (like Q95), then it won't be caught by this numeric validation anyway, which is correct.
-        for field in numeric_questions: # Using the global numeric_questions list for validation
-            # Skip if the response for this field is already determined to be non-numeric (e.g., Q95 for Gujarati)
-            if field == "95" and language == "Gujarati":
-                continue 
-            
-            try:
-                if responses.get(field) is not None and float(responses.get(field)) < 0:
-                    st.error(f"Field '{labels[field]}' must be a non-negative number.")
-                    has_validation_error = True
-                    break
-            except (ValueError, TypeError):
-                # This could happen if a numeric field somehow gets non-numeric input despite st.number_input
-                st.error(f"Field '{labels[field]}' must be a valid number.")
-                has_validation_error = True
-                break
-
-    if not has_validation_error:
-        # Validate harvesting time (question 62)
-        harvesting_time = responses.get("62")
-        if harvesting_time:
-            months = [m.strip() for m in harvesting_time.split(",") if m.strip()]
-            if len(months) != 3:
-                st.error("Please enter exactly three months separated by commas for 'Harvesting time'.")
-                has_validation_error = True
-
-    if not has_validation_error:
-        # Save the uploaded photo (if available)
+        # Photo Upload (using a placeholder for initial load, then the actual uploaded file)
+        uploaded_photo = st.file_uploader(
+            "Upload a photo (optional):",
+            type=["jpg", "jpeg", "png"],
+            key="uploaded_photo_form",
+        )
         if uploaded_photo:
-            photo_filename = f"photo_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_{uploaded_photo.name}"
-            photo_path = os.path.join(PHOTOS_DIR, photo_filename)
-            try:
-                with open(photo_path, "wb") as f:
-                    f.write(uploaded_photo.getbuffer())
-                st.success(f"Photo uploaded and saved as {photo_filename}.")
-                responses["uploaded_photo_filename"] = photo_filename # Store filename in responses
-            except Exception as e:
-                st.error(f"Error saving photo: {e}")
-                has_validation_error = True
+            st.session_state.uploaded_photo_info = {
+                "name": uploaded_photo.name,
+                "data": uploaded_photo.getvalue(),
+                "type": uploaded_photo.type
+            }
+        elif st.session_state.uploaded_photo_info and st.session_state.uploaded_photo_info.get("data"):
+            # Display previously uploaded image if available in session state
+            st.image(st.session_state.uploaded_photo_info["data"], caption="Previously uploaded photo", width=100)
+            if st.button("Clear Photo", key="clear_photo_button"):
+                st.session_state.uploaded_photo_info = None
+                st.rerun() # Rerun to clear the displayed image
 
-    if not has_validation_error:
-        # Get the current timestamp
-        current_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        
-        # Prepare data for CSV
-        final_data = {}
-        for k, v in responses.items():
-            if k in labels: # Use translated label for questionnaire data
-                final_data[labels[k]] = v
-            else: # For special keys like 'surveyor_name', 'uploaded_photo_filename'
-                if k == "surveyor_name":
-                    final_data["Surveyor Name"] = v
-                elif k == "uploaded_photo_filename":
-                    final_data["Uploaded Photo"] = v # Add the filename to the CSV
-        
-        # Add the timestamp to the data
-        final_data["Submission Timestamp"] = current_timestamp
+        # Submit Button for Review
+        if st.form_submit_button("Review and Proceed"):
+            # Perform validation here directly when the form is submitted for review
+            st.session_state.has_validation_error = False # Reset error flag
 
-        now = datetime.datetime.now()
-        filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-        df = pd.DataFrame([final_data])
-        
-        try:
-            df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
-            st.success("✅ Survey Submitted and Saved!")
-            st.rerun() # Rerun to clear the form fields and show success message
-        except Exception as e:
-            st.error(f"Error saving survey data: {e}")
+            if not st.session_state.responses.get("surveyor_name"):
+                st.error("Surveyor Name is required.")
+                st.session_state.has_validation_error = True
+
+            required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
+            for field in required_fields:
+                val = st.session_state.responses.get(field)
+                if val is None or val == "" or \
+                   (isinstance(val, (int, float)) and val == 0 and field in ["34", "37", "39", "41", "42"]):
+                    st.error(f"Field '{labels[field]}' is required.")
+                    st.session_state.has_validation_error = True
+
+            # Phone number validation
+            phone_number = str(st.session_state.responses.get("3", "")).strip()
+            if not phone_number.isdigit() or len(phone_number) != 10:
+                st.error("Mobile no. must be exactly 10 digits.")
+                st.session_state.has_validation_error = True
+            
+            # Numeric field validation
+            for field in numeric_questions:
+                if field == "95" and language == "Gujarati":
+                    continue
+                
+                val = st.session_state.responses.get(field)
+                try:
+                    if val is not None and float(val) < 0:
+                        st.error(f"Field '{labels[field]}' must be a non-negative number.")
+                        st.session_state.has_validation_error = True
+                        break
+                except (ValueError, TypeError):
+                    st.error(f"Field '{labels[field]}' must be a valid number.")
+                    st.session_state.has_validation_error = True
+                    break
+
+            # Harvesting time validation
+            harvesting_time = st.session_state.responses.get("62")
+            if harvesting_time:
+                months = [m.strip() for m in harvesting_time.split(",") if m.strip()]
+                if len(months) != 3:
+                    st.error("Please enter exactly three months separated by commas for 'Harvesting time'.")
+                    st.session_state.has_validation_error = True
+
+            if not st.session_state.has_validation_error:
+                st.session_state.form_submitted_for_review = True
+                st.rerun() # Rerun to display the review page
+
+# --- Review and Submit Section ---
+if st.session_state.form_submitted_for_review and not st.session_state.has_validation_error:
+    st.header("Review Your Submission")
+    st.markdown("---")
+
+    # Display collected data for review
+    st.subheader("General Information")
+    st.write(f"**Surveyor Name:** {st.session_state.responses.get('surveyor_name')}")
+    st.write(f"**{labels.get('1', 'Farmer Tracenet Code')}:** {st.session_state.responses.get('1')}")
+    st.write(f"**{labels.get('2', 'Farmer Full Name')}:** {st.session_state.responses.get('2')}")
+    st.write(f"**{labels.get('3', 'Mobile no.')}:** {st.session_state.responses.get('3')}")
+    st.write(f"**{labels.get('4', 'Gender')}:** {st.session_state.responses.get('4')}")
+    if st.session_state.responses.get('4') == "Others":
+        st.write(f"**If selected Others, please specify:** {st.session_state.responses.get('others_gender')}")
+
+    st.subheader("Location Details")
+    st.write(f"**{labels.get('6', 'Village')}:** {st.session_state.responses.get('6')}")
+    st.write(f"**{labels.get('7', 'Taluka/Block')}:** {st.session_state.responses.get('7')}")
+    st.write(f"**{labels.get('8', 'District')}:** {st.session_state.responses.get('8')}")
+    st.write(f"**{labels.get('9', 'State')}:** {st.session_state.responses.get('9')}")
+    st.write(f"**{labels.get('10', 'Pincode')}:** {st.session_state.responses.get('10')}")
+
+    st.subheader("Household Information")
+    st.write(f"**{labels.get('11', 'No. of males (adult) in household')}:** {st.session_state.responses.get('11')}")
+    st.write(f"**{labels.get('12', 'No. of females (adult) in household')}:** {st.session_state.responses.get('12')}")
+    st.write(f"**{labels.get('13', 'Children (<16) in household')}:** {st.session_state.responses.get('13')}")
+    st.write(f"**{labels.get('14', 'Total Member of Household')}:** {st.session_state.responses.get('14')}")
+    st.write(f"**{labels.get('15', 'No. of school-going children')}:** {st.session_state.responses.get('15')}")
+    st.write(f"**{labels.get('16', 'No. of earning members in the family')}:** {st.session_state.responses.get('16')}")
+    st.write(f"**{labels.get('34', 'Annual household income(in Rs)')}:** {st.session_state.responses.get('34')}")
+    st.write(f"**{labels.get('35', 'Primary source of income')}:** {st.session_state.responses.get('35')}")
+    st.write(f"**{labels.get('36', 'Secondary source of income')}:** {st.session_state.responses.get('36')}")
+    st.write(f"**{labels.get('37', 'Income from Primary source (Rs.)')}:** {st.session_state.responses.get('37')}")
+
+    st.subheader("Farming Details")
+    st.write(f"**{labels.get('17', 'Total Landholding (in acres)')}:** {st.session_state.responses.get('17')}")
+    st.write(f"**{labels.get('18', 'Primary crop')}:** {st.session_state.responses.get('18')}")
+    st.write(f"**{labels.get('19', 'Secondary crops')}:** {st.session_state.responses.get('19')}")
+    st.write(f"**{labels.get('20', 'Non-organic Cotton land (in acre) (if any)')}:** {st.session_state.responses.get('20')}")
+    st.write(f"**{labels.get('21', 'Organic Cotton land (in acre)')}:** {st.session_state.responses.get('21')}")
+    st.write(f"**{labels.get('22', 'Years since practicing organic cotton (#)')}:** {st.session_state.responses.get('22')}")
+    st.write(f"**{labels.get('23', 'Certification status (certified/IC1..)')}:** {st.session_state.responses.get('23')}")
+    st.write(f"**{labels.get('24', 'Source of irrigation')}:** {st.session_state.responses.get('24')}")
+    st.write(f"**{labels.get('25', 'Cultivable area (acre)')}:** {st.session_state.responses.get('25')}")
+    st.write(f"**{labels.get('26', 'No. of cattle (cow and Buffalo)')}:** {st.session_state.responses.get('26')}")
+    st.write(f"**{labels.get('27', 'Source of drinking water')}:** {st.session_state.responses.get('27')}")
+    st.write(f"**{labels.get('28', 'Preferred selling point (Aggregator/Suminter/APMC/other Gin)')}:** {st.session_state.responses.get('28')}")
+    st.write(f"**{labels.get('29', 'Has space for harvested cotton storage (Y/N)')}:** {st.session_state.responses.get('29')}")
+    st.write(f"**{labels.get('30', 'Receives any agro advisory (Y/N)')}:** {st.session_state.responses.get('30')}")
+    st.write(f"**{labels.get('31', 'Received any training on best practices for organic cotton?')}:** {st.session_state.responses.get('31')}")
+    st.write(f"**{labels.get('32', 'Membership in FPO/FPC/SHG')}:** {st.session_state.responses.get('32')}")
+    st.write(f"**{labels.get('33', 'Maintaining any Diary or Register for record keeping (Y/N)')}:** {st.session_state.responses.get('33')}")
+    st.write(f"**{labels.get('38', 'Certification cost per annum/acre')}:** {st.session_state.responses.get('38')}")
+    st.write(f"**{labels.get('39', 'Avg. production of organic cotton/acre (Kg)')}:** {st.session_state.responses.get('39')}")
+    st.write(f"**{labels.get('40', 'Cost of cultivation/acre (Rs)')}:** {st.session_state.responses.get('40')}")
+    st.write(f"**{labels.get('41', 'Quantity sold of organic cotton (in kg)')}:** {st.session_state.responses.get('41')}")
+    st.write(f"**{labels.get('42', 'Selling price per kg (Rs.)')}:** {st.session_state.responses.get('42')}")
+    st.write(f"**{labels.get('43', 'Material cost for bio-inputs')}:** {st.session_state.responses.get('43')}")
+    st.write(f"**{labels.get('44', 'Name of bio-input used for pest and disease management')}:** {st.session_state.responses.get('44')}")
+    st.write(f"**{labels.get('45', 'Name of bio-fertilizer/compost used')}:** {st.session_state.responses.get('45')}")
+    st.write(f"**{labels.get('46', 'No. of pheromone traps used / acre')}:** {st.session_state.responses.get('46')}")
+    st.write(f"**{labels.get('47', 'Cost per pheromone trap')}:** {st.session_state.responses.get('47')}")
+    st.write(f"**{labels.get('48', 'No. of Yellow sticky traps used / acre')}:** {st.session_state.responses.get('48')}")
+    st.write(f"**{labels.get('49', 'Cost per yellow sticky trap')}:** {st.session_state.responses.get('49')}")
+    st.write(f"**{labels.get('50', 'No. of Blue sticky traps used / acre')}:** {st.session_state.responses.get('50')}")
+    st.write(f"**{labels.get('51', 'Cost per blue sticky trap')}:** {st.session_state.responses.get('51')}")
+    st.write(f"**{labels.get('52', 'No. of bird perches used / acre')}:** {st.session_state.responses.get('52')}")
+    st.write(f"**{labels.get('53', 'Irrigation cost/acre')}:** {st.session_state.responses.get('53')}")
+    st.write(f"**{labels.get('54', 'No. of irrigation required for organic cotton')}:** {st.session_state.responses.get('54')}")
+    st.write(f"**{labels.get('55', 'Irrigation method used')}:** {st.session_state.responses.get('55')}")
+    st.write(f"**{labels.get('56', 'Any farm machinery hired (Y/N)')}:** {st.session_state.responses.get('56')}")
+    st.write(f"**{labels.get('57', 'Cost of machinery hiring (Rs.)/acre')}:** {st.session_state.responses.get('57')}")
+    st.write(f"**{labels.get('58', 'Local labour cost per day')}:** {st.session_state.responses.get('58')}")
+    st.write(f"**{labels.get('59', 'Migrant labour cost per day')}:** {st.session_state.responses.get('59')}")
+    st.write(f"**{labels.get('60', 'No. of workers required during sowing/acre')}:** {st.session_state.responses.get('60')}")
+    st.write(f"**{labels.get('61', 'No. of workers required during harvesting/acre')}:** {st.session_state.responses.get('61')}")
+    st.write(f"**{labels.get('62', 'Harvesting time (1st, 2nd & 3rd picking) (month)')}:** {st.session_state.responses.get('62')}")
+    st.write(f"**{labels.get('63', 'Weeding method used (manual/mechanical)')}:** {st.session_state.responses.get('63')}")
+    st.write(f"**{labels.get('64', 'Weeding cost/acre')}:** {st.session_state.responses.get('64')}")
+    st.write(f"**{labels.get('65', 'Cost of mulching/acre')}:** {st.session_state.responses.get('65')}")
+    st.write(f"**{labels.get('66', 'No. of tillage practiced')}:** {st.session_state.responses.get('66')}")
+    st.write(f"**{labels.get('67', 'Tillage cost/acre')}:** {st.session_state.responses.get('67')}")
+    st.write(f"**{labels.get('68', 'Land preparation cost/acre')}:** {st.session_state.responses.get('68')}")
+    st.write(f"**{labels.get('69', 'Seed rate of organic cotton/acre')}:** {st.session_state.responses.get('69')}")
+    st.write(f"**{labels.get('70', 'Variety of organic cotton seed (Name)')}:** {st.session_state.responses.get('70')}")
+    st.write(f"**{labels.get('71', 'Name of border crop used')}:** {st.session_state.responses.get('71')}")
+    st.write(f"**{labels.get('72', 'Name of the inter crop used')}:** {st.session_state.responses.get('72')}")
+    st.write(f"**{labels.get('73', 'Name of cover crop')}:** {st.session_state.responses.get('73')}")
+    st.write(f"**{labels.get('74', 'Name of trap crop')}:** {st.session_state.responses.get('74')}")
+    st.write(f"**{labels.get('75', 'Mulching used (Y/N)')}:** {st.session_state.responses.get('75')}")
+    st.write(f"**{labels.get('76', 'Type of mulching used (Bio-plastic/green/dry)')}:** {st.session_state.responses.get('76')}")
+    st.write(f"**{labels.get('77', 'What precautions used during storage')}:** {st.session_state.responses.get('77')}")
+    st.write(f"**{labels.get('78', 'Hired vehicle used for transportation of seed cotton (Y/N)')}:** {st.session_state.responses.get('78')}")
+    st.write(f"**{labels.get('79', 'Transportation cost (Rs.)/Kg of seed cotton')}:** {st.session_state.responses.get('79')}")
+    st.write(f"**{labels.get('80', 'Any quantity rejection due to contamination/impurities (Kg)')}:** {st.session_state.responses.get('80')}")
+    st.write(f"**{labels.get('81', 'Price discovery mechanism')}:** {st.session_state.responses.get('81')}")
+    st.write(f"**{labels.get('82', 'Payment Transaction type (Cash/online)')}:** {st.session_state.responses.get('82')}")
+    st.write(f"**{labels.get('83', 'Days of credit after sell')}:** {st.session_state.responses.get('83')}")
+    st.write(f"**{labels.get('84', 'Availing any govt. scheme or subsidy benefits (Y/N)')}:** {st.session_state.responses.get('84')}")
+    st.write(f"**{labels.get('85', 'Opted for crop insurance (Y/N)')}:** {st.session_state.responses.get('85')}")
+    st.write(f"**{labels.get('86', 'Cost of crop insurance per acre')}:** {st.session_state.responses.get('86')}")
+    st.write(f"**{labels.get('87', 'Possess KCC (Y/N)')}:** {st.session_state.responses.get('87')}")
+    st.write(f"**{labels.get('88', 'Possess active bank account (Y/N)')}:** {st.session_state.responses.get('88')}")
+    st.write(f"**{labels.get('89', 'Crop rotation used (Y/N)')}:** {st.session_state.responses.get('89')}")
+    st.write(f"**{labels.get('90', 'Crops used for rotation')}:** {st.session_state.responses.get('90')}")
+    st.write(f"**{labels.get('91', 'Using any water tracking devices (Y/N)')}:** {st.session_state.responses.get('91')}")
+    st.write(f"**{labels.get('92', 'Capacity of pump (in HP)')}:** {st.session_state.responses.get('92')}")
+    st.write(f"**{labels.get('93', 'Maintaining Buffer zone (Y/N)')}:** {st.session_state.responses.get('93')}")
+    st.write(f"**{labels.get('94', 'Utilization of crop residue (Fuel/cattle feed/biochar/in-situ composting/burning)')}:** {st.session_state.responses.get('94')}")
+    st.write(f"**{labels.get('95', 'Mode of payment to workers (cash/online)')}:** {st.session_state.responses.get('95')}")
+    st.write(f"**{labels.get('96', 'Any wage difference for Men and Women workers (Y/N)')}:** {st.session_state.responses.get('96')}")
+    st.write(f"**{labels.get('97', 'Using any labour register (Y/N)')}:** {st.session_state.responses.get('97')}")
+    st.write(f"**{labels.get('98', 'Any arrangement of safety-kit / first-aid for workers')}:** {st.session_state.responses.get('98')}")
+    st.write(f"**{labels.get('99', 'Any provision of shelter & safe drinking water for workers')}:** {st.session_state.responses.get('99')}")
+    st.write(f"**{labels.get('100', 'Any provision for lavatory for workers')}:** {st.session_state.responses.get('100')}")
+    st.write(f"**{labels.get('101', 'Involve family members (Women) in agricultural operations')}:** {st.session_state.responses.get('101')}")
+    st.write(f"**{labels.get('102', 'Any community water harvesting structure (Y/N)')}:** {st.session_state.responses.get('102')}")
+    st.write(f"**{labels.get('103', 'Use of soil moisture meter (Y/N)')}:** {st.session_state.responses.get('103')}")
 
 
-# Admin Real-Time Access
+    if st.session_state.uploaded_photo_info:
+        st.subheader("Uploaded Photo")
+        st.image(st.session_state.uploaded_photo_info["data"], caption=st.session_state.uploaded_photo_info["name"], use_container_width=True)
+
+    col1, col2 = st.columns(2)
+    with col1:
+        if st.button("Edit Responses", key="edit_responses_button"):
+            st.session_state.form_submitted_for_review = False
+            st.rerun()
+    with col2:
+        if st.button("Confirm and Submit", key="confirm_submit_button"):
+            # This is where the final submission logic goes
+            # Save the uploaded photo (if available)
+            photo_filename = None
+            if st.session_state.uploaded_photo_info:
+                photo_filename = f"photo_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_{st.session_state.uploaded_photo_info['name']}"
+                photo_path = os.path.join(PHOTOS_DIR, photo_filename)
+                try:
+                    with open(photo_path, "wb") as f:
+                        f.write(st.session_state.uploaded_photo_info["data"])
+                    st.success(f"Photo uploaded and saved as {photo_filename}.")
+                    st.session_state.responses["uploaded_photo_filename"] = photo_filename # Store filename in responses
+                except Exception as e:
+                    st.error(f"Error saving photo: {e}")
+                    st.session_state.has_validation_error = True
+
+            if not st.session_state.has_validation_error:
+                current_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+                final_data = {}
+                for k, v in st.session_state.responses.items():
+                    if k in labels:
+                        final_data[labels[k]] = v
+                    else:
+                        if k == "surveyor_name":
+                            final_data["Surveyor Name"] = v
+                        elif k == "uploaded_photo_filename":
+                            final_data["Uploaded Photo"] = v
+                        elif k == "others_gender": # Include 'others_gender' if present
+                            final_data["Others Gender Specify"] = v
+                
+                final_data["Submission Timestamp"] = current_timestamp
+
+                now = datetime.datetime.now()
+                filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
+                df = pd.DataFrame([final_data])
+                
+                try:
+                    df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
+                    st.success("✅ Survey Submitted and Saved!")
+                    # Clear session state for a new submission
+                    st.session_state.responses = {}
+                    st.session_state.uploaded_photo_info = None
+                    st.session_state.form_submitted_for_review = False
+                    st.session_state.has_validation_error = False
+                    st.rerun() # Rerun to clear the form and show success message
+                except Exception as e:
+                    st.error(f"Error saving survey data: {e}")
+                    st.session_state.has_validation_error = True
+
+# --- Admin Real-Time Access ---
 st.divider()
-st.header("Admin Real-Time Access") # Fixed: Removed emoji
-st.markdown("---") # Added markdown line for visual separation
+st.header("Admin Real-Time Access")
+st.markdown("---")
 
-# Allowed Admin Emails
 ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org", "rsomanchi@tns.org", "mkaushal@tns.org", "ksuneha@tns.org"]
 admin_email = st.text_input("Enter your Admin Email to unlock extra features:", key="admin_email_input")
 
 if admin_email in ALLOWED_EMAILS:
     st.success("✅ Admin access granted! Real-time view enabled.")
 
-    # View and Download Uploaded Images
     if st.checkbox("🖼️ View and Download Uploaded Images"):
         image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
         if image_files:
             for img_file in image_files:
                 img_path = os.path.join(PHOTOS_DIR, img_file)
                 try:
-                    # Validate and display the image
                     img = Image.open(img_path)
-                    img.verify() # Verify if it's a valid image
-                    
-                    # Display the image on Streamlit
+                    img.verify()
                     st.image(img_path, caption=img_file, use_container_width=True)
-                    
-                    # Provide a download button for the image
                     with open(img_path, "rb") as img_bytes:
                         st.download_button(
                             label=f"⬇️ Download {img_file}",
-                            data=img_bytes.read(), # Read the bytes from the file object
+                            data=img_bytes.read(),
                             file_name=img_file,
                             mime="image/jpeg" if img_file.lower().endswith(('.jpg', '.jpeg')) else "image/png",
-                            key=f"download_{img_file}" # Added a unique key for each download button
+                            key=f"download_{img_file}"
                         )
                 except Exception as e:
                     st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
 
-            st.markdown("---") # Added markdown line for visual separation
-            st.subheader("Download All Photos") # Using subheader for consistency
+            st.markdown("---")
+            st.subheader("Download All Photos")
             
-            # Create a BytesIO object to store the zip file in memory
             zip_buffer = io.BytesIO()
             with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
                 for img_file in image_files:
                     img_path = os.path.join(PHOTOS_DIR, img_file)
                     zip_file.write(img_path, os.path.basename(img_path))
             
-            # Reset buffer position to the beginning
             zip_buffer.seek(0)
             
             st.download_button(
@@ -716,14 +882,12 @@ if admin_email in ALLOWED_EMAILS:
         else:
             st.warning("⚠️ No images found.")
 
-    # View Past Submissions
     if st.checkbox("📄 View Past Submissions"):
         files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
         if files:
             all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
             st.dataframe(all_data)
             
-            # Provide a download button for all responses
             csv = all_data.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="⬇️ Download All Responses",
