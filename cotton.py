@@ -2041,7 +2041,6 @@ FARMER_TRACENET_CODES = {
     "GJ0807008386": "Kanabhai",
     "GJ0807008387": "Ratuben",
 }
-}
 
 # --- Language Selection ---
 language = st.selectbox(
