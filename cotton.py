@@ -1346,7 +1346,7 @@ FARMER_TRACENET_CODES = {
     "GJ0807002254": "Matrabhai Devaytbhai",
     "GJ0807002255": "Gelabhai Devaytbhai",
     "GJ0807002256": "Ratnabhai Gokalbhai",
-    "GJ0807002257": "Samtbhai jivnabhai",
+    "GJ0807002257": "Samatbhai jivnabhai",
     "GJ0807002259": "Ranchodbhai Bhikhabhai",
     "GJ0807002260": "SeKHabhai Bhikhabhai",
     "GJ0807002261": "Hirabhai Bhikhabhai",
@@ -2042,6 +2042,7 @@ FARMER_TRACENET_CODES = {
     "GJ0807008387": "Ratuben",
 }
 
+
 # --- Language Selection ---
 language = st.selectbox(
     "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
@@ -2524,33 +2525,40 @@ if not st.session_state.form_submitted_for_review:
             if question_key == "1": # Farmer Tracenet Code - now a selectbox
                 # Get the current selected index if a value exists, otherwise 0
                 default_index_code = 0
-                if current_value in FARMER_TRACENET_CODES:
+                if current_value and current_value in FARMER_TRACENET_CODES:
                     default_index_code = list(FARMER_TRACENET_CODES.keys()).index(current_value)
+
+                # Add an empty option at the beginning of the list for "select one" behavior
+                tracenet_options = [""] + list(FARMER_TRACENET_CODES.keys())
+                
+                # Adjust default_index_code for the added empty option
+                if current_value in FARMER_TRACENET_CODES:
+                    default_index_code = tracenet_options.index(current_value)
+                else:
+                    default_index_code = 0 # Default to empty string
 
                 selected_tracenet_code = st.selectbox(
                     question_text,
-                    options=list(FARMER_TRACENET_CODES.keys()),
+                    options=tracenet_options,
                     key=f"question_{question_key}",
                     index=default_index_code
                 )
                 st.session_state.responses[question_key] = selected_tracenet_code
-                # Automatically set farmer name based on selected tracenet code
-                st.session_state.responses["2"] = FARMER_TRACENET_CODES.get(selected_tracenet_code, "")
 
-            elif question_key == "2": # Farmer Full Name - now auto-populated or text input if no tracenet code selected
-                # If a tracenet code is selected, its value will be updated in the selectbox above.
-                # Here, we ensure the text input for name also reflects that, but still allows manual edit if needed.
-                # The 'disabled' property for a text_input for a dynamic value is tricky with Streamlit.
-                # A simpler approach is to let it be editable but ensure the selectbox for tracenet code
-                # is the primary driver. If a user manually changes the name here, it will overwrite
-                # the auto-populated one.
+                # Set farmer name based on selected tracenet code or clear if empty
+                if selected_tracenet_code:
+                    st.session_state.responses["2"] = FARMER_TRACENET_CODES.get(selected_tracenet_code, "")
+                else:
+                    st.session_state.responses["2"] = "" # Clear name if no code selected
+
+            elif question_key == "2": # Farmer Full Name - now auto-populated or editable
+                # The value for this text input will be driven by the selection in question "1"
+                # If a tracenet code is selected, its corresponding name will be in st.session_state.responses["2"]
+                # It remains editable in case a user needs to manually override or enter a name not in the list.
                 st.session_state.responses[question_key] = st.text_input(
                     question_text,
                     key=f"question_{question_key}",
                     value=st.session_state.responses.get("2", ""),
-                    # Disabled makes it not editable, which might be too restrictive if someone
-                    # wants to enter a name not in the tracenet_codes list.
-                    # disabled=bool(st.session_state.responses.get("1")) and st.session_state.responses.get("1") in FARMER_TRACENET_CODES
                 )
 
             elif question_key == "4":  # Gender
@@ -2617,7 +2625,7 @@ if not st.session_state.form_submitted_for_review:
                 )
 
             elif question_key in numeric_questions:
-                if language == "Gujarati" and question_key == "95":
+                if field == "95" and language == "Gujarati": # This 'field' should be 'question_key'
                     st.session_state.responses[question_key] = st.text_input(
                         question_text,
                         key=f"question_{question_key}",
