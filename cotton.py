@@ -2946,12 +2946,12 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
                 filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
                 df = pd.DataFrame([final_data])
 
-               try:
-                    df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
-                    st.success("✅ Survey Submitted and Saved!")
-                    # Clear session state for a new submission
-                    st.session_state.responses = {}
-                    st.session_state.uploaded_photo_info = None
+           try:
+             df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
+             st.success("✅ Survey Submitted and Saved!")
+        
+             st.session_state.responses = {}
+             st.session_state.uploaded_photo_info = None
                     st.session_state.form_submitted_for_review = False
                     st.session_state.has_validation_error = False
                     st.session_state.show_other_tracenet_input = False # Reset other tracenet input visibility
