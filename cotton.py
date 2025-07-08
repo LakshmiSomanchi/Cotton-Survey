@@ -2044,8 +2044,6 @@ if 'FARMER_TRACENET_CODES' not in st.session_state:
         "GJ0807008387": "Ratuben",
     }
 
-
-# --- Language Selection ---
 language = st.selectbox(
     "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
     ["English", "Hindi", "Marathi", "Gujarati"],
@@ -2948,7 +2946,7 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
                 filename = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
                 df = pd.DataFrame([final_data])
 
-                try:
+               try:
                     df.to_csv(os.path.join(SAVE_DIR, filename), index=False, encoding="utf-8")
                     st.success("✅ Survey Submitted and Saved!")
                     # Clear session state for a new submission
@@ -2958,4 +2956,75 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
                     st.session_state.has_validation_error = False
                     st.session_state.show_other_tracenet_input = False # Reset other tracenet input visibility
                     st.session_state.other_tracenet_code = "" # Clear stored other tracenet code
-                    st.session_state.other_farmer_name = "" # Clear stored other
+                    st.session_state.other_farmer_name = "" # Clear stored other farmer name
+                    st.rerun() # Rerun to clear the form and show success message
+                except Exception as e:
+                    st.error(f"Error saving survey data: {e}")
+                    st.session_state.has_validation_error = True
+
+# --- Admin Real-Time Access ---
+st.divider()
+st.header("Admin Real-Time Access")
+st.markdown("---")
+
+ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org", "rsomanchi@tns.org", "mkaushal@tns.org", "ksuneha@tns.org"]
+admin_email = st.text_input("Enter your Admin Email to unlock extra features:", key="admin_email_input")
+
+if admin_email in ALLOWED_EMAILS:
+    st.success("✅ Admin access granted! Real-time view enabled.")
+
+    if st.checkbox("🖼️ View and Download Uploaded Images"):
+        image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
+        if image_files:
+            for img_file in image_files:
+                img_path = os.path.join(PHOTOS_DIR, img_file)
+                try:
+                    img = Image.open(img_path)
+                    img.verify()
+                    st.image(img_path, caption=img_file, use_container_width=True)
+                    with open(img_path, "rb") as img_bytes:
+                        st.download_button(
+                            label=f"⬇️ Download {img_file}",
+                            data=img_bytes.read(),
+                            file_name=img_file,
+                            mime="image/jpeg" if img_file.lower().endswith(('.jpg', '.jpeg')) else "image/png",
+                            key=f"download_{img_file}"
+                        )
+                except Exception as e:
+                    st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
+
+            st.markdown("---")
+            st.subheader("Download All Photos")
+
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+                for img_file in image_files:
+                    img_path = os.path.join(PHOTOS_DIR, img_file)
+                    zip_file.write(img_path, os.path.basename(img_path))
+
+            zip_buffer.seek(0)
+
+            st.download_button(
+                label="⬇️ Download All Photos as ZIP",
+                data=zip_buffer.getvalue(),
+                file_name="all_photos.zip",
+                mime="application/zip",
+            )
+        else:
+            st.warning("⚠️ No images found.")
+
+    if st.checkbox("📄 View Past Submissions"):
+        files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
+        if files:
+            all_data = pd.concat([pd.read_csv(os.path.join(SAVE_DIR, f)) for f in files], ignore_index=True)
+            st.dataframe(all_data)
+
+            csv = all_data.to_csv(index=False).encode('utf-8')
+            st.download_button(
+                label="⬇️ Download All Responses",
+                data=csv,
+                file_name='all_survey_responses.csv',
+                mime='text/csv'
+            )
+        else:
+            st.warning("⚠️ No submissions found yet.")
