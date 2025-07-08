@@ -20,7 +20,6 @@ st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
 # --- Farmer Tracenet Codes and Names ---
 # Define the dictionary for farmer tracenet codes and names
 FARMER_TRACENET_CODES = {
-    FARMER_TRACENET_CODES = {
     "GJ0102003994": "Makvana Jamniben",
     "GJ0102003995": "Makvana Vaghabhai",
     "GJ0102003996": "Mali Rameshbhai",
