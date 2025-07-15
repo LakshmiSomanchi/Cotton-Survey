@@ -488,6 +488,41 @@ if not st.session_state.form_submitted_for_review:
             key="surveyor_name_input",
             value=st.session_state.responses.get("surveyor_name", "") # Persist value
         )
+        MULTISELECT_QUESTIONS = {
+    "23": ["Certified", "Non-Certified", "IC1", "IC2", "Others"],
+    "32": ["FPO", "FPC", "SHG", "Others"],
+    "94": ["Fuel", "Cattle feed", "Biochar", "In-situ composting", "Burning"],
+}
+
+# Add these new numeric-only questions
+additional_numeric_questions = ["3", "6", "37", "38", "39", "40", "41", "42", "57", "65", "67", "68", "69"]
+numeric_questions = list(set(numeric_questions + additional_numeric_questions))
+
+# Inside form rendering loop:
+for question_key in questions:
+    question_text = labels.get(question_key, f"Question {question_key} (No translation)")
+    current_value = st.session_state.responses.get(question_key, "")
+
+    if question_key in MULTISELECT_QUESTIONS:
+        selected_values = current_value.split(", ") if isinstance(current_value, str) and current_value else []
+        st.session_state.responses[question_key] = \
+            st.multiselect(
+                question_text,
+                MULTISELECT_QUESTIONS[question_key],
+                default=selected_values,
+                key=f"question_{question_key}"
+            )
+
+    elif question_key in numeric_questions:
+        num_val = float(current_value) if isinstance(current_value, (int, float)) or (isinstance(current_value, str) and current_value.replace('.', '', 1).isdigit()) else 0.0
+        st.session_state.responses[question_key] = st.number_input(
+            question_text,
+            min_value=0.0,
+            format="%.2f",
+            key=f"question_{question_key}",
+            value=num_val
+        )
+
 
         for question_key in questions:
             question_text = labels.get(question_key, f"Question {question_key} (No translation)")
