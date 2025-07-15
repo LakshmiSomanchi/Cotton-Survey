@@ -262,7 +262,7 @@ dict_translations = {
 }
 
 # Define the questions using the keys from the dictionary
-questions = [str(i) for i in range(1, 104)]  # Create a list of strings from "1" to "103"
+questions = [str(i) for i in range(1, 104)] # Create a list of strings from "1" to "103"
 
 # Get the translations for the selected language
 labels = dict_translations.get(language, dict_translations["English"])
@@ -273,8 +273,7 @@ numeric_questions = list(set([
     "11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37",
     "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52",
     "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69",
-    "79", "80", "83", "86", "92", "3", "6", # Added "3" (Mobile no) as text_input, so it should not be here. "6" is also text.
-    "37", "38", "39", "40", "41", "42", "57", "65", "67", "68", "69"
+    "79", "80", "83", "86", "92",
 ]))
 
 # Remove "3" and "6" from numeric_questions as they are text inputs for mobile/village
@@ -512,177 +511,129 @@ if not st.session_state.form_submitted_for_review:
             if harvesting_time:
                 months = [m.strip() for m in harvesting_time.split(",") if m.strip()]
                 if len(months) != 3:
-                    st.error("Please enter exactly three months separated by commas for 'Harvesting time'.")
+                    st.error(f"Field '{labels['62']}' must contain exactly 3 months, separated by commas (e.g., month 1, month 2, month 3).")
                     st.session_state.has_validation_error = True
-            
-            # Additional validation for 'Others' in Gender
-            if st.session_state.responses.get('4') == "Others" and not st.session_state.responses.get('others_gender'):
-                st.error("Please specify your gender if 'Others' is selected.")
-                st.session_state.has_validation_error = True
 
             if not st.session_state.has_validation_error:
                 st.session_state.form_submitted_for_review = True
-                st.rerun()  # Rerun to display the review page
+                st.rerun()
 
-# --- Review and Submit Section ---
+# --- Review and Edit Section ---
 if st.session_state.form_submitted_for_review and not st.session_state.has_validation_error:
-    st.header("Review Your Submission")
-    st.markdown("---")
+    st.subheader("Review Your Responses")
+    st.write("Please review the information below. If everything is correct, click 'Confirm and Save'.")
 
-    # Display collected data for review
-    st.subheader("General Information")
-    st.write(f"**Surveyor Name:** {st.session_state.responses.get('surveyor_name')}")
-    # Iterate through all questions to display them
-    for question_key in questions:
-        question_text = labels.get(question_key, f"Question {question_key} (No translation)")
-        display_value = st.session_state.responses.get(question_key, "")
+    # Display responses for review
+    for key, value in st.session_state.responses.items():
+        if key == "surveyor_name":
+            surveyor_name_label = ""
+            if language == "English":
+                surveyor_name_label = "Surveyor Name"
+            elif language == "Hindi":
+                surveyor_name_label = "सर्वेयर का नाम"
+            elif language == "Marathi":
+                surveyor_name_label = "सर्वेयरचे नाव"
+            elif language == "Gujarati":
+                surveyor_name_label = "સર્વેયરનું નામ"
+            st.write(f"**{surveyor_name_label}:** {value}")
+        elif key in questions:
+            st.write(f"**{labels.get(key, f'Question {key}')}:** {value}")
+        elif key == "others_gender":
+            st.write(f"**If selected 'Others', please specify:** {value}")
 
-        if question_key == "4" and display_value == "Others" and st.session_state.responses.get('others_gender'):
-            st.write(f"**{question_text}:** {display_value} ({st.session_state.responses.get('others_gender')})")
-        else:
-            st.write(f"**{question_text}:** {display_value}")
-
+    # Display uploaded photo for review
     if st.session_state.uploaded_photo_info:
-        st.subheader("Uploaded Photo")
-        st.image(st.session_state.uploaded_photo_info["data"], caption=st.session_state.uploaded_photo_info["name"], use_container_width=True)
+        st.image(st.session_state.uploaded_photo_info["data"], caption="Uploaded Photo", width=200)
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.button("Edit Responses", key="edit_responses_button"):
+        if st.button("Edit Responses"):
             st.session_state.form_submitted_for_review = False
             st.rerun()
     with col2:
-        if st.button("Confirm and Submit", key="confirm_submit_button"):
-            # Save the uploaded photo (if available)
-            photo_filename = None
-            if st.session_state.uploaded_photo_info:
-                photo_filename = f"photo_{datetime.datetime.now().strftime('%Y%m%d_%H%M%S')}_{st.session_state.uploaded_photo_info['name']}"
-                photo_path = os.path.join(PHOTOS_DIR, photo_filename)
-                try:
+        # Define 'now' just before it's used to ensure it's always current
+        now = datetime.datetime.now()
+        timestamp = now.strftime("%Y%m%d_%H%M%S")
+        farmer_name_for_filename = "".join(filter(str.isalnum, st.session_state.responses.get("2", "unknown_farmer"))).lower()
+        file_name = f"survey_response_{farmer_name_for_filename}_{timestamp}.csv"
+        photo_name = f"photo_{farmer_name_for_filename}_{timestamp}.jpg" # Or .png based on original type
+
+
+        if st.button("Confirm and Save"):
+            try:
+                # Prepare data for CSV
+                data_to_save = {
+                    "Timestamp": timestamp,
+                    "Surveyor Name": st.session_state.responses.get("surveyor_name")
+                }
+                for q_key in questions:
+                    data_to_save[labels.get(q_key, f"Question {q_key}")] = st.session_state.responses.get(q_key)
+                if "others_gender" in st.session_state.responses:
+                    data_to_save["Others Gender Specify"] = st.session_state.responses.get("others_gender")
+                
+                df = pd.DataFrame([data_to_save])
+
+                # Save CSV
+                csv_path = os.path.join(SAVE_DIR, file_name)
+                df.to_csv(csv_path, index=False, encoding='utf-8')
+
+                # Save photo if uploaded
+                if st.session_state.uploaded_photo_info:
+                    photo_path = os.path.join(PHOTOS_DIR, photo_name)
                     with open(photo_path, "wb") as f:
                         f.write(st.session_state.uploaded_photo_info["data"])
-                    st.success(f"Photo uploaded and saved as {photo_filename}.")
-                    st.session_state.responses["uploaded_photo_filename"] = photo_filename  # Store filename in responses
-                except Exception as e:
-                    st.error(f"Error saving photo: {e}")
-                    st.session_state.has_validation_error = True
+                    st.success(f"Survey data and photo saved successfully! 🎉 Your photo is saved as {photo_name}.")
+                else:
+                    st.success("Survey data saved successfully! 🎉")
 
-            if not st.session_state.has_validation_error:
-                current_timestamp = datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-                final_data = {}
-                # Map question keys to their translated labels for the final DataFrame
-                for q_key in questions:
-                    final_data[labels.get(q_key, f"Question {q_key}")] = st.session_state.responses.get(q_key, "")
-                
-                # Add special fields that are not part of `questions` list
-                final_data["Surveyor Name"] = st.session_state.responses.get("surveyor_name", "")
-                if st.session_state.responses.get('4') == "Others":
-                    final_data["Others Gender Specify"] = st.session_state.responses.get("others_gender", "")
-                final_data["Uploaded Photo"] = st.session_state.responses.get("uploaded_photo_filename", "")
-                final_data["Submission Timestamp"] = current_timestamp
+                # Clear session state for new entry
+                st.session_state.responses = {}
+                st.session_state.uploaded_photo_info = None
+                st.session_state.form_submitted_for_review = False
+                st.rerun() # Rerun to display an empty form for a new entry
 
-                df = pd.DataFrame([final_data])
+            except Exception as e:
+                st.error(f"An error occurred while saving: {e}")
 
-                try:
-                    filename_csv = f"survey_{now.strftime('%Y%m%d_%H%M%S')}.csv"
-                    df.to_csv(os.path.join(SAVE_DIR, filename_csv), index=False, encoding="utf-8")
-                    st.success("✅ Survey Submitted and Saved!")
-                    # Clear session state for a new submission
-                    st.session_state.responses = {}
-                    st.session_state.uploaded_photo_info = None
-                    st.session_state.form_submitted_for_review = False
-                    st.session_state.has_validation_error = False
-                    st.rerun()  # Rerun to clear the form and show success message
-                except Exception as e:
-                    st.error(f"Error saving survey data: {e}")
-                    st.session_state.has_validation_error = True
-
-# --- Admin Real-Time Access ---
-st.divider()
-st.header("Admin Real-Time Access")
+# --- Admin Section for Downloading Data ---
 st.markdown("---")
+st.subheader("Admin Download")
 
-ALLOWED_EMAILS = ["shifalis@tns.org", "rmukherjee@tns.org", "rsomanchi@tns.org", "mkaushal@tns.org", "ksuneha@tns.org"]
-
-if not st.session_state.admin_unlocked:
-    admin_email_input = st.text_input("Enter your Admin Email to unlock extra features:", key="admin_email_input_unlocked")
-    if admin_email_input in ALLOWED_EMAILS:
-        st.session_state.admin_unlocked = True
-        st.rerun() # Rerun to hide the input box
-    elif admin_email_input: # Only show error if something was typed
-        st.error("Invalid Admin Email.")
+admin_password = st.text_input("Enter Admin Password to Download Data", type="password")
+if admin_password == st.secrets["ADMIN_PASSWORD"]: # Access password from Streamlit secrets
+    st.session_state.admin_unlocked = True
+    st.success("Admin access granted!")
+else:
+    st.session_state.admin_unlocked = False
+    if admin_password: # Only show error if password was entered
+        st.error("Incorrect password.")
 
 if st.session_state.admin_unlocked:
-    st.success("✅ Admin access granted! Real-time view enabled.")
+    st.write("Click below to download all collected survey data.")
 
-    if st.checkbox("🖼️ View and Download Uploaded Images", key="view_images_checkbox"):
-        image_files = [f for f in os.listdir(PHOTOS_DIR) if f.lower().endswith(('.jpg', '.jpeg', '.png'))]
-        if image_files:
-            for img_file in image_files:
-                img_path = os.path.join(PHOTOS_DIR, img_file)
-                try:
-                    img = Image.open(img_path)
-                    img.verify() # Verify if the image is valid
-                    st.image(img_path, caption=img_file, use_container_width=True)
-                    with open(img_path, "rb") as img_bytes:
-                        st.download_button(
-                            label=f"⬇️ Download {img_file}",
-                            data=img_bytes.read(),
-                            file_name=img_file,
-                            mime="image/jpeg" if img_file.lower().endswith(('.jpg', '.jpeg')) else "image/png",
-                            key=f"download_{img_file}"
-                        )
-                except Exception as e:
-                    st.warning(f"⚠️ Unable to display image: {img_file}. Error: {str(e)}")
+    # Function to create a zip file
+    def create_zip_archive(csv_dir, photo_dir):
+        zip_buffer = io.BytesIO()
+        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+            for folder, _, files in os.walk(csv_dir):
+                for file in files:
+                    if file.endswith(".csv"):
+                        file_path = os.path.join(folder, file)
+                        zip_file.write(file_path, os.path.relpath(file_path, csv_dir))
+            for folder, _, files in os.walk(photo_dir):
+                for file in files:
+                    if file.endswith((".jpg", ".jpeg", ".png")):
+                        file_path = os.path.join(folder, file)
+                        zip_file.write(file_path, os.path.relpath(file_path, photo_dir))
+        zip_buffer.seek(0)
+        return zip_buffer.getvalue()
 
-            st.markdown("---")
-            st.subheader("Download All Photos")
-            
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
-                for img_file in image_files:
-                    img_path = os.path.join(PHOTOS_DIR, img_file)
-                    zip_file.write(img_path, os.path.basename(img_path))
-            
-            zip_buffer.seek(0)
-            
-            st.download_button(
-                label="⬇️ Download All Photos as ZIP",
-                data=zip_buffer.getvalue(),
-                file_name="all_photos.zip",
-                mime="application/zip",
-                key="download_all_photos_zip"
-            )
-        else:
-            st.warning("⚠️ No images found.")
-
-    if st.checkbox("📄 View Past Submissions", key="view_submissions_checkbox"):
-        files = [f for f in os.listdir(SAVE_DIR) if f.endswith('.csv')]
-        if files:
-            # Sort files by creation/modification time to display recent first (optional)
-            files.sort(key=lambda x: os.path.getmtime(os.path.join(SAVE_DIR, x)), reverse=True)
-            
-            all_data_list = []
-            for f in files:
-                try:
-                    df_temp = pd.read_csv(os.path.join(SAVE_DIR, f))
-                    all_data_list.append(df_temp)
-                except Exception as e:
-                    st.error(f"Error reading {f}: {e}")
-            
-            if all_data_list:
-                all_data = pd.concat(all_data_list, ignore_index=True)
-                st.dataframe(all_data)
-                
-                csv = all_data.to_csv(index=False).encode('utf-8')
-                st.download_button(
-                    label="⬇️ Download All Responses",
-                    data=csv,
-                    file_name='all_survey_responses.csv',
-                    mime='text/csv',
-                    key="download_all_responses_csv"
-                )
-            else:
-                st.warning("⚠️ No valid submission files found yet.")
-        else:
-            st.warning("⚠️ No submissions found yet.")
+    # Create download button for all data
+    if st.button("Download All Data (CSV & Photos)"):
+        zip_data = create_zip_archive(SAVE_DIR, PHOTOS_DIR)
+        st.download_button(
+            label="Click to Download ZIP",
+            data=zip_data,
+            file_name="all_survey_data.zip",
+            mime="application/zip"
+        )
