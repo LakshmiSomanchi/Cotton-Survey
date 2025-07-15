@@ -488,7 +488,7 @@ if not st.session_state.form_submitted_for_review:
             key="surveyor_name_input",
             value=st.session_state.responses.get("surveyor_name", "") # Persist value
         )
-        MULTISELECT_QUESTIONS = {
+MULTISELECT_QUESTIONS = {
     "23": ["Certified", "Non-Certified", "IC1", "IC2", "Others"],
     "32": ["FPO", "FPC", "SHG", "Others"],
     "94": ["Fuel", "Cattle feed", "Biochar", "In-situ composting", "Burning"],
