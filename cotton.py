@@ -222,7 +222,7 @@ dict_translations = {
         "44": "જંતુ અને રોગ વ્યવસ્થાપન માટે વપરાતા બાયો-ઇનપુટનું નામ",
         "45": "વપરાતા બાયો-ખત/ખાદનું નામ", "46": "ફેરોમોન ટ્રેપનો ઉપયોગ / એકર",
         "47": "ખર્ચ પ્રતિ ફેરોમોન ટ્રેપ", "48": "પીળા સ્ટીકી ટ્રેપનો ઉપયોગ / એકર",
-        "49": "ખર્ચ પ્રતિ પીળો સ્ટીકી ટ્રેપ", "50": "વાદળી સ્ટીકી ટ્રેપનો ઉપયોગ / એકર",
+        "49": "खર્ચ प्रति पीળો સ્ટીકી ટ્રેપ", "50": "વાદળી સ્ટીકી ટ્રેપનો ઉપયોગ / એકર",
         "51": "ખર્ચ પ્રતિ વાદળી સ્ટીકી ટ્રેપ", "52": "પક્ષી સ્ટેન્ડનો ઉપયોગ પ્રતિ એકર",
         "53": "સિંચાઈ ખર્ચ/એકર", "54": "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા",
         "55": "વપરાયેલી સિંચાઈ પદ્ધતિ", "56": "કોઈપણ ખેતી મશીનરી ભાડે લીધી છે (હા/ના)",
@@ -302,8 +302,6 @@ if 'form_submitted_for_review' not in st.session_state:
     st.session_state.form_submitted_for_review = False
 if 'has_validation_error' not in st.session_state:
     st.session_state.has_validation_error = False
-if 'admin_unlocked' not in st.session_state:
-    st.session_state.admin_unlocked = False
 
 # --- Questionnaire Form Section ---
 if not st.session_state.form_submitted_for_review:
@@ -556,7 +554,14 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
         timestamp = now.strftime("%Y%m%d_%H%M%S")
         farmer_name_for_filename = "".join(filter(str.isalnum, st.session_state.responses.get("2", "unknown_farmer"))).lower()
         file_name = f"survey_response_{farmer_name_for_filename}_{timestamp}.csv"
-        photo_name = f"photo_{farmer_name_for_filename}_{timestamp}.jpg" # Or .png based on original type
+        # Determine photo extension based on uploaded type, default to jpg
+        photo_ext = "jpg"
+        if st.session_state.uploaded_photo_info and st.session_state.uploaded_photo_info["type"]:
+            if "png" in st.session_state.uploaded_photo_info["type"]:
+                photo_ext = "png"
+            elif "jpeg" in st.session_state.uploaded_photo_info["type"]:
+                photo_ext = "jpeg"
+        photo_name = f"photo_{farmer_name_for_filename}_{timestamp}.{photo_ext}"
 
 
         if st.button("Confirm and Save"):
@@ -599,41 +604,32 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
 st.markdown("---")
 st.subheader("Admin Download")
 
-admin_password = st.text_input("Enter Admin Password to Download Data", type="password")
-if admin_password == st.secrets["ADMIN_PASSWORD"]: # Access password from Streamlit secrets
-    st.session_state.admin_unlocked = True
-    st.success("Admin access granted!")
-else:
-    st.session_state.admin_unlocked = False
-    if admin_password: # Only show error if password was entered
-        st.error("Incorrect password.")
+# Since there are no passwords or secrets, the download functionality is directly available.
+st.write("Click below to download all collected survey data.")
 
-if st.session_state.admin_unlocked:
-    st.write("Click below to download all collected survey data.")
+# Function to create a zip file
+def create_zip_archive(csv_dir, photo_dir):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
+        for folder, _, files in os.walk(csv_dir):
+            for file in files:
+                if file.endswith(".csv"):
+                    file_path = os.path.join(folder, file)
+                    zip_file.write(file_path, os.path.relpath(file_path, csv_dir))
+        for folder, _, files in os.walk(photo_dir):
+            for file in files:
+                if file.endswith((".jpg", ".jpeg", ".png")):
+                    file_path = os.path.join(folder, file)
+                    zip_file.write(file_path, os.path.relpath(file_path, photo_dir))
+    zip_buffer.seek(0)
+    return zip_buffer.getvalue()
 
-    # Function to create a zip file
-    def create_zip_archive(csv_dir, photo_dir):
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-            for folder, _, files in os.walk(csv_dir):
-                for file in files:
-                    if file.endswith(".csv"):
-                        file_path = os.path.join(folder, file)
-                        zip_file.write(file_path, os.path.relpath(file_path, csv_dir))
-            for folder, _, files in os.walk(photo_dir):
-                for file in files:
-                    if file.endswith((".jpg", ".jpeg", ".png")):
-                        file_path = os.path.join(folder, file)
-                        zip_file.write(file_path, os.path.relpath(file_path, photo_dir))
-        zip_buffer.seek(0)
-        return zip_buffer.getvalue()
-
-    # Create download button for all data
-    if st.button("Download All Data (CSV & Photos)"):
-        zip_data = create_zip_archive(SAVE_DIR, PHOTOS_DIR)
-        st.download_button(
-            label="Click to Download ZIP",
-            data=zip_data,
-            file_name="all_survey_data.zip",
-            mime="application/zip"
-        )
+# Create download button for all data
+if st.button("Download All Data (CSV & Photos)"):
+    zip_data = create_zip_archive(SAVE_DIR, PHOTOS_DIR)
+    st.download_button(
+        label="Click to Download ZIP",
+        data=zip_data,
+        file_name="all_survey_data.zip",
+        mime="application/zip"
+    )
