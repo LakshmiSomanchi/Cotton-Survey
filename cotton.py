@@ -224,7 +224,7 @@ dict_translations = {
         "47": "ખર્ચ પ્રતિ ફેરોમોન ટ્રેપ", "48": "પીળા સ્ટીકી ટ્રેપનો ઉપયોગ / એકર",
         "49": "खર્ચ प्रति पीળો સ્ટીકી ટ્રેપ", "50": "વાદળી સ્ટીકી ટ્રેપનો ઉપયોગ / એકર",
         "51": "ખર્ચ પ્રતિ વાદળી સ્ટીકી ટ્રેપ", "52": "પક્ષી સ્ટેન્ડનો ઉપયોગ પ્રતિ એકર",
-        "53": "સિંચાઈ ખર્ચ/એકર", "54": "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા",
+        "53": "सिંચાઈ ખર્ચ/એકર", "54": "ઓર્ગેનિક કપાસ માટે જરૂરી સિંચાઈની સંખ્યા",
         "55": "વપરાયેલી સિંચાઈ પદ્ધતિ", "56": "કોઈપણ ખેતી મશીનરી ભાડે લીધી છે (હા/ના)",
         "57": "મશીનરી ભાડે લેવાનો ખર્ચ (રૂ.)/એકર", "58": "સ્થાનિક મજૂરી ખર્ચ પ્રતિ દિવસ",
         "59": "સ્થળાંતરિત મજૂરી ખર્ચ પ્રતિ દિવસ", "60": "વાવણીના સમયે જરૂરી કામદારોની સંખ્યા/એકર",
@@ -302,6 +302,17 @@ if 'form_submitted_for_review' not in st.session_state:
     st.session_state.form_submitted_for_review = False
 if 'has_validation_error' not in st.session_state:
     st.session_state.has_validation_error = False
+
+# New: Initialize the DataFrame to store all responses
+if 'all_survey_data' not in st.session_state:
+    # Define all possible columns for the DataFrame
+    # This ensures consistency even if some fields are empty for certain surveys
+    initial_columns = ["Timestamp", "Surveyor Name"]
+    for q_key in questions:
+        initial_columns.append(labels.get(q_key, f"Question {q_key}"))
+    initial_columns.append("Others Gender Specify") # For the 'Others' gender option
+    st.session_state.all_survey_data = pd.DataFrame(columns=initial_columns)
+
 
 # --- Questionnaire Form Section ---
 if not st.session_state.form_submitted_for_review:
@@ -553,7 +564,7 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
         now = datetime.datetime.now()
         timestamp = now.strftime("%Y%m%d_%H%M%S")
         farmer_name_for_filename = "".join(filter(str.isalnum, st.session_state.responses.get("2", "unknown_farmer"))).lower()
-        file_name = f"survey_response_{farmer_name_for_filename}_{timestamp}.csv"
+        # Removed: file_name = f"survey_response_{farmer_name_for_filename}_{timestamp}.csv"
         # Determine photo extension based on uploaded type, default to jpg
         photo_ext = "jpg"
         if st.session_state.uploaded_photo_info and st.session_state.uploaded_photo_info["type"]:
@@ -566,30 +577,31 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
 
         if st.button("Confirm and Save"):
             try:
-                # Prepare data for CSV
-                data_to_save = {
+                # Prepare data for the current response
+                current_response_data = {
                     "Timestamp": timestamp,
                     "Surveyor Name": st.session_state.responses.get("surveyor_name")
                 }
                 for q_key in questions:
-                    data_to_save[labels.get(q_key, f"Question {q_key}")] = st.session_state.responses.get(q_key)
+                    current_response_data[labels.get(q_key, f"Question {q_key}")] = st.session_state.responses.get(q_key)
                 if "others_gender" in st.session_state.responses:
-                    data_to_save["Others Gender Specify"] = st.session_state.responses.get("others_gender")
-                
-                df = pd.DataFrame([data_to_save])
+                    current_response_data["Others Gender Specify"] = st.session_state.responses.get("others_gender")
+                else:
+                    current_response_data["Others Gender Specify"] = "" # Ensure this column exists even if empty
 
-                # Save CSV
-                csv_path = os.path.join(SAVE_DIR, file_name)
-                df.to_csv(csv_path, index=False, encoding='utf-8')
+                # Convert to a Series and append to the main DataFrame
+                # Use pd.concat instead of .append() for newer Pandas versions
+                new_row_df = pd.DataFrame([current_response_data])
+                st.session_state.all_survey_data = pd.concat([st.session_state.all_survey_data, new_row_df], ignore_index=True)
 
                 # Save photo if uploaded
                 if st.session_state.uploaded_photo_info:
                     photo_path = os.path.join(PHOTOS_DIR, photo_name)
                     with open(photo_path, "wb") as f:
                         f.write(st.session_state.uploaded_photo_info["data"])
-                    st.success(f"Survey data and photo saved successfully! 🎉 Your photo is saved as {photo_name}.")
+                    st.success(f"Survey data recorded and photo saved successfully! 🎉 Your photo is saved as {photo_name}.")
                 else:
-                    st.success("Survey data saved successfully! 🎉")
+                    st.success("Survey data recorded successfully! 🎉")
 
                 # Clear session state for new entry
                 st.session_state.responses = {}
@@ -604,18 +616,14 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
 st.markdown("---")
 st.subheader("Admin Download")
 
-# Since there are no passwords or secrets, the download functionality is directly available.
-st.write("Click below to download all collected survey data.")
-
-# Function to create a zip file
-def create_zip_archive(csv_dir, photo_dir):
+# Function to create a zip file (remains mostly the same, but no individual CSVs in SAVE_DIR)
+def create_zip_archive(csv_data_buffer, photo_dir): # Modified to accept CSV data directly
     zip_buffer = io.BytesIO()
     with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-        for folder, _, files in os.walk(csv_dir):
-            for file in files:
-                if file.endswith(".csv"):
-                    file_path = os.path.join(folder, file)
-                    zip_file.write(file_path, os.path.relpath(file_path, csv_dir))
+        # Add the single consolidated CSV
+        zip_file.writestr("all_survey_responses.csv", csv_data_buffer.getvalue())
+
+        # Add all photos
         for folder, _, files in os.walk(photo_dir):
             for file in files:
                 if file.endswith((".jpg", ".jpeg", ".png")):
@@ -625,11 +633,22 @@ def create_zip_archive(csv_dir, photo_dir):
     return zip_buffer.getvalue()
 
 # Create download button for all data
+# New: Convert the accumulated DataFrame to CSV for download
 if st.button("Download All Data (CSV & Photos)"):
-    zip_data = create_zip_archive(SAVE_DIR, PHOTOS_DIR)
-    st.download_button(
-        label="Click to Download ZIP",
-        data=zip_data,
-        file_name="all_survey_data.zip",
-        mime="application/zip"
-    )
+    if not st.session_state.all_survey_data.empty:
+        # Create an in-memory CSV buffer for the main data
+        csv_buffer = io.StringIO()
+        st.session_state.all_survey_data.to_csv(csv_buffer, index=False, encoding='utf-8')
+        csv_buffer.seek(0)
+
+        # Create the zip archive with the single CSV and all photos
+        zip_data = create_zip_archive(csv_buffer, PHOTOS_DIR)
+        st.download_button(
+            label="Click to Download ZIP",
+            data=zip_data,
+            file_name="all_survey_data.zip",
+            mime="application/zip"
+        )
+        st.success("Your data download is ready!")
+    else:
+        st.info("No survey data collected yet to download.")
