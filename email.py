@@ -1,83 +1,156 @@
-import streamlit as st
+import requests
 import smtplib
+import ssl
+import os
+import datetime
+import zipfile
+import shutil # For zipping directories
+
+from email.mime.multipart import MIMEMultipart
+from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
-from datetime import datetime
+from email import encoders
 
-# --- Configuration (from Streamlit Secrets) ---
-SENDER_EMAIL = st.secrets["email_sender"]["email"]
-SENDER_PASSWORD = st.secrets["email_sender"]["password"]
+# --- CONFIGURATION ---
+# IMPORTANT: Replace this with the actual direct download link from your Streamlit app.
+# If your Streamlit app is deployed, this link will be dynamic.
+# You might need to consider how to reliably get this link if it changes.
+# For local testing, you can use a placeholder, but for deployment,
+# you'll likely need a mechanism for the script to 'trigger' the download on the app
+# or the app to serve a static, always-available zip.
+# A simpler approach for automation, given your current Streamlit code,
+# is to directly zip the 'responses' and 'photos' folders from where the Streamlit app runs.
+# We'll go with zipping local directories for robustness.
+# DOWNLOAD_URL = 'YOUR_STREAMLIT_DOWNLOAD_LINK' # Not directly used if zipping local folders
 
-# List of recipient emails
-RECIPIENT_EMAILS = [
-    st.secrets["survey_recipients"]["email1"],
-    st.secrets["survey_recipients"]["email2"]
-]
-# Add more recipients if you configured them in secrets
-# RECIPIENT_EMAILS.append(st.secrets["survey_recipients"]["email3"])
+SENDER_EMAIL = "rsomanchi@tns.org"
+RECEIVER_EMAIL = "ksuneha@tns.org"
+# !!! IMPORTANT: Use an App Password if 2FA is enabled on your Gmail account.
+# Generate one here: https://myaccount.google.com/apppasswords
+SENDER_PASS = "YOUR_APP_PASSWORD" # <--- REPLACE THIS WITH YOUR GMAIL APP PASSWORD
 
+SMTP_SERVER = "smtp.gmail.com"
+SMTP_PORT = 587
 
-# --- Function to send email ---
-def send_survey_email(name, email, rating, feedback):
-    timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+# Define the directories where your Streamlit app saves data
+RESPONSES_DIR = "responses"
+PHOTOS_DIR = "photos"
+OUTPUT_ZIP_FILENAME = "all_survey_data.zip"
 
-    subject = f"New Survey Response from {name} ({email})"
-    body = f"""
-    New Survey Response:
-    --------------------
-    Timestamp: {timestamp}
-    Name: {name}
-    Email: {email}
-    Service Rating: {rating}
-    Feedback:
-    {feedback}
-    --------------------
+def create_local_zip_archive(output_zip_name, responses_folder, photos_folder):
     """
+    Creates a zip archive of the responses CSV and photos folder.
+    """
+    if not os.path.exists(responses_folder) and not os.path.exists(photos_folder):
+        print(f"Error: Neither '{responses_folder}' nor '{photos_folder}' found. No data to zip.")
+        return None
 
-    msg = MIMEText(body)
-    msg["Subject"] = subject
-    msg["From"] = SENDER_EMAIL
+    # Ensure the main responses CSV exists
+    csv_file_path = os.path.join(responses_folder, "all_survey_responses_persistent.csv")
+    if not os.path.exists(csv_file_path):
+        print(f"Warning: CSV file '{csv_file_path}' not found. Zipping photos only if available.")
+        # Create an empty CSV if it doesn't exist, to ensure the zip is not entirely empty if no photos
+        with open(csv_file_path, 'w') as f:
+            f.write("Timestamp,Surveyor Name,Question 1,...\n") # Write header for an empty CSV
 
-    success = False
-    for recipient in RECIPIENT_EMAILS:
-        try:
-            msg["To"] = recipient # Set recipient for each individual email
-            with smtplib.SMTP_SSL("smtp.gmail.com", 465) as smtp: # Use SMTP_SSL for secure connection
-                smtp.login(SENDER_EMAIL, SENDER_PASSWORD)
-                smtp.send_message(msg)
-            st.success(f"Response sent to {recipient} successfully!")
-            success = True # At least one email sent successfully
-        except Exception as e:
-            st.error(f"Error sending email to {recipient}: {e}")
-            st.warning("Please check your sender email/app password and recipient emails in Streamlit secrets.")
+    # Create a temporary directory to stage files for zipping
+    temp_zip_content_dir = "temp_zip_content"
+    os.makedirs(temp_zip_content_dir, exist_ok=True)
 
-    return success # Return True if at least one email was sent successfully
+    try:
+        # Copy the CSV to the temporary directory
+        if os.path.exists(csv_file_path):
+            shutil.copy(csv_file_path, os.path.join(temp_zip_content_dir, os.path.basename(csv_file_path)))
 
-# --- Streamlit App UI ---
-st.set_page_config(layout="centered", page_title="Email Survey App")
-st.title("My Simple Survey App (Emailing Responses)")
-st.write("Please fill out the survey below. Your response will be emailed.")
-
-with st.form("survey_form"):
-    name = st.text_input("Your Name:", key="name_input") # Added keys for better input management
-    email = st.text_input("Your Email:", key="email_input")
-    rating = st.slider("Rate our service (1-5):", 1, 5, key="rating_slider")
-    feedback = st.text_area("Any additional feedback?", key="feedback_area")
-
-    submitted = st.form_submit_button("Submit Survey")
-
-    if submitted:
-        if not name or not email:
-            st.warning("Please fill in your Name and Email.")
+        # Copy photos to the temporary directory under a 'photos' subfolder
+        if os.path.exists(photos_folder):
+            shutil.copytree(photos_folder, os.path.join(temp_zip_content_dir, "photos"), dirs_exist_ok=True)
+            print(f"Copied '{photos_folder}' to temporary directory.")
         else:
-            if send_survey_email(name, email, rating, feedback):
-                st.info("Your response has been sent via email. Check your inbox!")
-                # Optional: Clear form inputs after successful submission
-                st.session_state.name_input = ""
-                st.session_state.email_input = ""
-                st.session_state.rating_slider = 3 # Reset slider to a default
-                st.session_state.feedback_area = ""
-            else:
-                st.error("Failed to send response. Please check the error messages above.")
+            print(f"'{photos_folder}' directory not found. No photos to include in zip.")
 
-st.markdown("---")
-st.markdown("Developed with ❤️ by Streamlit User")
+        # Create the zip file
+        shutil.make_archive(output_zip_name.replace(".zip", ""), 'zip', temp_zip_content_dir)
+        print(f"Successfully created '{output_zip_name}'.")
+        return output_zip_name
+    except Exception as e:
+        print(f"Error creating zip archive: {e}")
+        return None
+    finally:
+        # Clean up the temporary directory
+        if os.path.exists(temp_zip_content_dir):
+            shutil.rmtree(temp_zip_content_dir)
+            print(f"Cleaned up temporary directory '{temp_zip_content_dir}'.")
+
+
+def send_email(attachment_path):
+    """
+    Sends an email with the specified attachment.
+    """
+    if not os.path.exists(attachment_path):
+        print(f"Attachment file not found: {attachment_path}")
+        return False
+
+    msg = MIMEMultipart()
+    msg['From'] = SENDER_EMAIL
+    msg['To'] = RECEIVER_EMAIL
+    msg['Subject'] = "Daily Cotton Survey Responses and Photos"
+
+    body = "Attached are the latest survey responses and photos from the Cotton Farming Questionnaire."
+    msg.attach(MIMEText(body, 'plain'))
+
+    try:
+        with open(attachment_path, "rb") as attachment:
+            part = MIMEBase("application", "octet-stream")
+            part.set_payload(attachment.read())
+        encoders.encode_base64(part)
+        part.add_header(
+            "Content-Disposition",
+            f"attachment; filename= {os.path.basename(attachment_path)}",
+        )
+        msg.attach(part)
+    except Exception as e:
+        print(f"Error attaching file {attachment_path}: {e}")
+        return False
+
+    context = ssl.create_default_context()
+    try:
+        with smtplib.SMTP_SSL(SMTP_SERVER, 465, context=context) as server: # Use 465 for SSL directly
+            # server.starttls(context=context) # For port 587
+            server.login(SENDER_EMAIL, SENDER_PASS)
+            server.send_message(msg)
+            print("Email sent successfully!")
+            return True
+    except smtplib.SMTPAuthenticationError:
+        print("SMTP Authentication Error: Check your sender email and app password.")
+        print("If you have 2FA enabled, you MUST use an app-specific password.")
+        return False
+    except Exception as e:
+        print(f"Error sending email: {e}")
+        return False
+
+def main():
+    print(f"Starting data collection and email process at {datetime.datetime.now()}")
+
+    # 1. Create a zip archive of the local responses and photos directories
+    zipped_file_name = OUTPUT_ZIP_FILENAME
+    archive_path = create_local_zip_archive(zipped_file_name, RESPONSES_DIR, PHOTOS_DIR)
+
+    if archive_path:
+        # 2. Send the email with the created zip archive
+        if send_email(archive_path):
+            print("Process completed successfully.")
+        else:
+            print("Failed to send email.")
+        
+        # Clean up the created zip file after sending
+        try:
+            os.remove(archive_path)
+            print(f"Cleaned up temporary zip file: {archive_path}")
+        except OSError as e:
+            print(f"Error removing temporary zip file {archive_path}: {e}")
+    else:
+        print("Skipping email send due to no archive being created.")
+
+if __name__ == "__main__":
+    main()
