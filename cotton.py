@@ -683,3 +683,36 @@ if st.button("Download All Data (CSV & Photos)"):
         st.success("Your data download is ready!")
     else:
         st.info("No survey data collected yet to download.")
+
+---
+
+## Viewing Submitted Responses within the App
+
+To display the submitted responses directly in your Streamlit application, you can add a new section that reads from `st.session_state.all_survey_data`.
+
+Here's the code you need to **add to the end of your existing script**:
+
+```python
+# --- View Submitted Responses Section ---
+st.markdown("---")
+st.subheader("View Submitted Responses")
+
+if not st.session_state.all_survey_data.empty:
+    st.write("Here are all the survey responses submitted so far:")
+    st.dataframe(st.session_state.all_survey_data)
+
+    # Optional: Add a search/filter functionality for viewing
+    search_term = st.text_input("Search responses (e.g., by Farmer Full Name or Mobile no.)")
+    if search_term:
+        filtered_df = st.session_state.all_survey_data[
+            st.session_state.all_survey_data.apply(
+                lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1
+            )
+        ]
+        if not filtered_df.empty:
+            st.write("Filtered Results:")
+            st.dataframe(filtered_df)
+        else:
+            st.info("No matching responses found.")
+else:
+    st.info("No survey responses have been submitted yet.")
