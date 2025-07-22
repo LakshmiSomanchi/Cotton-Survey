@@ -27,7 +27,7 @@ SENDER_EMAIL = "rsomanchi@tns.org"
 RECEIVER_EMAIL = "ksuneha@tns.org"
 # !!! IMPORTANT: Use an App Password if 2FA is enabled on your Gmail account.
 # Generate one here: https://myaccount.google.com/apppasswords
-SENDER_PASS = "TNS_SAKSHAM@2025" # <--- REPLACE THIS WITH YOUR GMAIL APP PASSWORD
+#SENDER_PASS = "TNS_SAKSHAM@2025" 
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
