@@ -4,7 +4,7 @@ import ssl
 import os
 import datetime
 import zipfile
-import shutil # For zipping directories
+import shutil 
 
 from email.mime.multipart import MIMEMultipart
 from email.mime.base import MIMEBase
@@ -12,27 +12,14 @@ from email.mime.text import MIMEText
 from email import encoders
 
 # --- CONFIGURATION ---
-# IMPORTANT: Replace this with the actual direct download link from your Streamlit app.
-# If your Streamlit app is deployed, this link will be dynamic.
-# You might need to consider how to reliably get this link if it changes.
-# For local testing, you can use a placeholder, but for deployment,
-# you'll likely need a mechanism for the script to 'trigger' the download on the app
-# or the app to serve a static, always-available zip.
-# A simpler approach for automation, given your current Streamlit code,
-# is to directly zip the 'responses' and 'photos' folders from where the Streamlit app runs.
-# We'll go with zipping local directories for robustness.
-# DOWNLOAD_URL = 'YOUR_STREAMLIT_DOWNLOAD_LINK' # Not directly used if zipping local folders
+#DOWNLOAD_URL = 'https://cotton-survey-ppffrvwsjsvolqvpm7yjwh.streamlit.app/'
 
 SENDER_EMAIL = "rsomanchi@tns.org"
 RECEIVER_EMAIL = "ksuneha@tns.org"
-# !!! IMPORTANT: Use an App Password if 2FA is enabled on your Gmail account.
-# Generate one here: https://myaccount.google.com/apppasswords
 #SENDER_PASS = "TNS_SAKSHAM@2025" 
 
 SMTP_SERVER = "smtp.gmail.com"
 SMTP_PORT = 587
-
-# Define the directories where your Streamlit app saves data
 RESPONSES_DIR = "responses"
 PHOTOS_DIR = "photos"
 OUTPUT_ZIP_FILENAME = "all_survey_data.zip"
@@ -49,27 +36,27 @@ def create_local_zip_archive(output_zip_name, responses_folder, photos_folder):
     csv_file_path = os.path.join(responses_folder, "all_survey_responses_persistent.csv")
     if not os.path.exists(csv_file_path):
         print(f"Warning: CSV file '{csv_file_path}' not found. Zipping photos only if available.")
-        # Create an empty CSV if it doesn't exist, to ensure the zip is not entirely empty if no photos
-        with open(csv_file_path, 'w') as f:
-            f.write("Timestamp,Surveyor Name,Question 1,...\n") # Write header for an empty CSV
 
-    # Create a temporary directory to stage files for zipping
+        with open(csv_file_path, 'w') as f:
+            f.write("Timestamp,Surveyor Name,Question 1,...\n") 
+
+    
     temp_zip_content_dir = "temp_zip_content"
     os.makedirs(temp_zip_content_dir, exist_ok=True)
 
     try:
-        # Copy the CSV to the temporary directory
+        
         if os.path.exists(csv_file_path):
             shutil.copy(csv_file_path, os.path.join(temp_zip_content_dir, os.path.basename(csv_file_path)))
 
-        # Copy photos to the temporary directory under a 'photos' subfolder
+       
         if os.path.exists(photos_folder):
             shutil.copytree(photos_folder, os.path.join(temp_zip_content_dir, "photos"), dirs_exist_ok=True)
             print(f"Copied '{photos_folder}' to temporary directory.")
         else:
             print(f"'{photos_folder}' directory not found. No photos to include in zip.")
 
-        # Create the zip file
+        
         shutil.make_archive(output_zip_name.replace(".zip", ""), 'zip', temp_zip_content_dir)
         print(f"Successfully created '{output_zip_name}'.")
         return output_zip_name
@@ -77,7 +64,7 @@ def create_local_zip_archive(output_zip_name, responses_folder, photos_folder):
         print(f"Error creating zip archive: {e}")
         return None
     finally:
-        # Clean up the temporary directory
+        
         if os.path.exists(temp_zip_content_dir):
             shutil.rmtree(temp_zip_content_dir)
             print(f"Cleaned up temporary directory '{temp_zip_content_dir}'.")
@@ -132,18 +119,16 @@ def send_email(attachment_path):
 def main():
     print(f"Starting data collection and email process at {datetime.datetime.now()}")
 
-    # 1. Create a zip archive of the local responses and photos directories
+    
     zipped_file_name = OUTPUT_ZIP_FILENAME
     archive_path = create_local_zip_archive(zipped_file_name, RESPONSES_DIR, PHOTOS_DIR)
 
     if archive_path:
-        # 2. Send the email with the created zip archive
+       
         if send_email(archive_path):
             print("Process completed successfully.")
         else:
             print("Failed to send email.")
-        
-        # Clean up the created zip file after sending
         try:
             os.remove(archive_path)
             print(f"Cleaned up temporary zip file: {archive_path}")
