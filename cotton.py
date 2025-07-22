@@ -14,6 +14,9 @@ os.makedirs(SAVE_DIR, exist_ok=True)
 PHOTOS_DIR = "photos"
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 
+# Define the path for the persistent CSV file
+SAVE_CSV_PATH = os.path.join(SAVE_DIR, "all_survey_responses_persistent.csv")
+
 st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
 st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
 
@@ -303,15 +306,35 @@ if 'form_submitted_for_review' not in st.session_state:
 if 'has_validation_error' not in st.session_state:
     st.session_state.has_validation_error = False
 
-# New: Initialize the DataFrame to store all responses
+# New: Initialize the DataFrame to store all responses AND LOAD EXISTING DATA
 if 'all_survey_data' not in st.session_state:
-    # Define all possible columns for the DataFrame
-    # This ensures consistency even if some fields are empty for certain surveys
-    initial_columns = ["Timestamp", "Surveyor Name"]
-    for q_key in questions:
-        initial_columns.append(labels.get(q_key, f"Question {q_key}"))
-    initial_columns.append("Others Gender Specify") # For the 'Others' gender option
-    st.session_state.all_survey_data = pd.DataFrame(columns=initial_columns)
+    if os.path.exists(SAVE_CSV_PATH):
+        try:
+            st.session_state.all_survey_data = pd.read_csv(SAVE_CSV_PATH)
+            st.info(f"Loaded {len(st.session_state.all_survey_data)} existing responses.")
+        except pd.errors.EmptyDataError:
+            # Handle case where file exists but is empty
+            initial_columns = ["Timestamp", "Surveyor Name"]
+            for q_key in questions:
+                initial_columns.append(labels.get(q_key, f"Question {q_key}"))
+            initial_columns.append("Others Gender Specify")
+            st.session_state.all_survey_data = pd.DataFrame(columns=initial_columns)
+            st.info("Existing CSV found but was empty. Initializing new DataFrame.")
+        except Exception as e:
+            st.error(f"Error loading existing survey data: {e}. Starting with an empty DataFrame.")
+            initial_columns = ["Timestamp", "Surveyor Name"]
+            for q_key in questions:
+                initial_columns.append(labels.get(q_key, f"Question {q_key}"))
+            initial_columns.append("Others Gender Specify")
+            st.session_state.all_survey_data = pd.DataFrame(columns=initial_columns)
+    else:
+        # Define all possible columns for the DataFrame
+        initial_columns = ["Timestamp", "Surveyor Name"]
+        for q_key in questions:
+            initial_columns.append(labels.get(q_key, f"Question {q_key}"))
+        initial_columns.append("Others Gender Specify") # For the 'Others' gender option
+        st.session_state.all_survey_data = pd.DataFrame(columns=initial_columns)
+        st.info("No existing survey data found. Starting a new DataFrame.")
 
 
 # --- Questionnaire Form Section ---
@@ -590,9 +613,17 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
                     current_response_data["Others Gender Specify"] = "" # Ensure this column exists even if empty
 
                 # Convert to a Series and append to the main DataFrame
-                # Use pd.concat instead of .append() for newer Pandas versions
                 new_row_df = pd.DataFrame([current_response_data])
+                # Ensure all_survey_data has the required columns before concat
+                # This handles cases where new_row_df might have columns not yet in all_survey_data
+                for col in new_row_df.columns:
+                    if col not in st.session_state.all_survey_data.columns:
+                        st.session_state.all_survey_data[col] = None # Add missing column with NaN
                 st.session_state.all_survey_data = pd.concat([st.session_state.all_survey_data, new_row_df], ignore_index=True)
+                
+                # Save the updated DataFrame to the persistent CSV file
+                st.session_state.all_survey_data.to_csv(SAVE_CSV_PATH, index=False, encoding='utf-8')
+
 
                 # Save photo if uploaded
                 if st.session_state.uploaded_photo_info:
