@@ -7,8 +7,8 @@ from PIL import Image
 import zipfile
 
 # --- Admin Configuration ---
+# Only specified users will have access, no password required.
 ADMIN_USERS = {"ksuneha@tns.org", "rsomanchi@tns.org", "shifalis@tns.org"}
-ADMIN_PASSWORD = "your_secure_admin_password" # !! IMPORTANT: Change this to a strong password !!
 
 # Set the directory to save responses
 SAVE_DIR = "responses"
@@ -117,7 +117,7 @@ dict_translations = {
         "51": "प्रति नीले चिपचिपे जाल लागत", "52": "पक्षी पर्च का उपयोग / एकड़",
         "53": "सिंचाई लागत/एकर", "54": "जैविक कपास के लिए आवश्यक सिंचाई की संख्या",
         "55": "सिंचाई विधि का उपयोग किया गया", "56": "क्या कोई कृषि मशीनरी किराए पर ली गई है (हाँ/नहीं)",
-        "57": "मशीनरी किराए पर लेने की लागत (रु.)/एकड़", "58": "स्थानीय श्रम लागत प्रति दिन",
+        "57": "मशीनरी किराए पर लेने की लागत (रु.))/एकड़", "58": "स्थानीय श्रम लागत प्रति दिन",
         "59": "प्रवासी श्रम लागत प्रति दिन", "60": "बुवाई के दौरान आवश्यक श्रमिकों की संख्या/एकड़",
         "61": "कटाई के दौरान आवश्यक श्रमिकों की संख्या/एकड़",
         "62": "कटाई का समय (1st, 2nd और 3rd पिकिंग) (महीना)",
@@ -146,7 +146,7 @@ dict_translations = {
         "100": "श्रमिकों के लिए शौचालय का कोई प्रावधान",
         "101": "कृषि कार्यों में परिवार के सदस्यों (महिलाओं) को शामिल करना",
         "102": "कोई सामुदायिक जल संचयन संरचना (हाँ/नहीं)",
-        "103": "मृदा नमी मीटर का उपयोग (हाँ/नहीं)",
+        "103": "मृदा नमी मीटर का उपयोग (हाँ/नाही)",
     },
     "Marathi": {
         "1": "शेतकरी ट्रेसनेट कोड", "2": "शेतकऱ्याचे पूर्ण नाव", "3": "मोबाईल नंबर", "4": "लिंग",
@@ -255,7 +255,7 @@ dict_translations = {
         "91": "કોઈપણ પાણી ટ્રેકિંગ ઉપકરણોનો ઉપયોગ કરો છો (હા/ના)",
         "92": "કૂવા કે બોરવેલના પંપની ક્ષમતા (એચપીમાં)",
         "93": "બફર ઝોન જાળવો છો (હા/ના)",
-        "94": "પાકના અવશેષોનો ઉપયોગ (બળતણ/પશુઓનો ખોરાક/બાયોચાર/જમીનમાં ભેળવવું/સળગાવવું/કંપોસ્ટ)",
+        "94": "પાકના અવશેષોનો ઉપયોગ (બળતણ/પશુઓનો ખોરાક/બાયોચાર/इन-सीटू कंपोस्टिंग/सળગાવવું/कંપोस्ट)",
         "95": "કામદારને ચૂકવણીની પદ્ધતિ (રોકડા/ઓનલાઇન)",
         "96": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)",
         "97": "કોઈ શ્રમ રજીસ્ટરનો ઉપયોગ કરી રહ્યા છો (હા/ના)",
@@ -306,7 +306,7 @@ if 'form_submitted_for_review' not in st.session_state:
 if 'has_validation_error' not in st.session_state:
     st.session_state.has_validation_error = False
 if 'admin_logged_in' not in st.session_state:
-    st.session_state.admin_logged_in = False # New: Admin login status
+    st.session_state.admin_logged_in = False
 
 # Initialize the DataFrame to store all responses AND LOAD EXISTING DATA
 if 'all_survey_data' not in st.session_state:
@@ -615,27 +615,27 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
             except Exception as e:
                 st.error(f"An error occurred while saving: {e}")
 
-# --- Admin Login Section ---
+# --- Admin Login Section (Modified: No Password) ---
 st.markdown("---")
 st.subheader("Admin Login (for Data Access)")
 
 if not st.session_state.admin_logged_in:
     with st.form("admin_login_form"):
-        admin_email = st.text_input("Admin Email")
-        admin_password = st.text_input("Password", type="password")
+        admin_email = st.text_input("Admin Email").lower() # Convert to lowercase for consistent checking
         login_button = st.form_submit_button("Login")
 
         if login_button:
-            if admin_email.lower() in ADMIN_USERS and admin_password == ADMIN_PASSWORD:
+            if admin_email in ADMIN_USERS:
                 st.session_state.admin_logged_in = True
                 st.success("Admin login successful!")
                 st.rerun() # Rerun to hide login form and show admin sections
             else:
-                st.error("Invalid email or password.")
+                st.error("Invalid email. Please use an authorized admin email.")
 else:
-    st.success("You are logged in as Admin.")
+    st.success(f"You are logged in as Admin ({st.session_state.get('last_admin_email', 'unknown')}).")
     if st.button("Logout"):
         st.session_state.admin_logged_in = False
+        st.session_state.pop('last_admin_email', None) # Clear last logged-in email
         st.rerun()
 
 # --- Admin Sections (Conditional Display) ---
@@ -643,7 +643,6 @@ if st.session_state.admin_logged_in:
     st.markdown("---")
     st.subheader("Admin Download")
 
-    # Function to create a zip file (remains mostly the same, but no individual CSVs in SAVE_DIR)
     def create_zip_archive(csv_data_buffer, photo_dir):
         zip_buffer = io.BytesIO()
         with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
@@ -669,7 +668,7 @@ if st.session_state.admin_logged_in:
                 data=zip_data,
                 file_name="all_survey_data.zip",
                 mime="application/zip",
-                key="download_button_admin" # Unique key for this button
+                key="download_button_admin"
             )
             st.success("Your data download is ready!")
         else:
