@@ -113,7 +113,7 @@ dict_translations = {
         "51": "प्रति नीले चिपचिपे जाल लागत", "52": "पक्षी पर्च का उपयोग / एकड़",
         "53": "सिंचाई लागत/एकर", "54": "जैविक कपास के लिए आवश्यक सिंचाई की संख्या",
         "55": "सिंचाई विधि का उपयोग किया गया", "56": "क्या कोई कृषि मशीनरी किराए पर ली गई है (हाँ/नहीं)",
-        "57": "मशीनरी किराए पर लेने की लागत (रु.)/एकड़", "58": "स्थानीय श्रम लागत प्रति दिन",
+        "57": "मशीनरी किराए पर लेने की लागत (रु.))/एकड़", "58": "स्थानीय श्रम लागत प्रति दिन",
         "59": "प्रवासी श्रम लागत प्रति दिन", "60": "बुवाई के दौरान आवश्यक श्रमिकों की संख्या/एकड़",
         "61": "कटाई के दौरान आवश्यक श्रमिकों की संख्या/एकड़",
         "62": "कटाई का समय (1st, 2nd और 3rd पिकिंग) (महीना)",
@@ -306,7 +306,7 @@ if 'form_submitted_for_review' not in st.session_state:
 if 'has_validation_error' not in st.session_state:
     st.session_state.has_validation_error = False
 
-# New: Initialize the DataFrame to store all responses AND LOAD EXISTING DATA
+# Initialize the DataFrame to store all responses AND LOAD EXISTING DATA
 if 'all_survey_data' not in st.session_state:
     if os.path.exists(SAVE_CSV_PATH):
         try:
@@ -587,7 +587,6 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
         now = datetime.datetime.now()
         timestamp = now.strftime("%Y%m%d_%H%M%S")
         farmer_name_for_filename = "".join(filter(str.isalnum, st.session_state.responses.get("2", "unknown_farmer"))).lower()
-        # Removed: file_name = f"survey_response_{farmer_name_for_filename}_{timestamp}.csv"
         # Determine photo extension based on uploaded type, default to jpg
         photo_ext = "jpg"
         if st.session_state.uploaded_photo_info and st.session_state.uploaded_photo_info["type"]:
@@ -684,15 +683,6 @@ if st.button("Download All Data (CSV & Photos)"):
     else:
         st.info("No survey data collected yet to download.")
 
----
-
-## Viewing Submitted Responses within the App
-
-To display the submitted responses directly in your Streamlit application, you can add a new section that reads from `st.session_state.all_survey_data`.
-
-Here's the code you need to **add to the end of your existing script**:
-
-```python
 # --- View Submitted Responses Section ---
 st.markdown("---")
 st.subheader("View Submitted Responses")
