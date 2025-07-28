@@ -11,9 +11,6 @@ from email.mime.base import MIMEBase
 from email.mime.text import MIMEText
 from email import encoders
 
-# --- CONFIGURATION ---
-#DOWNLOAD_URL = 'https://cotton-survey-ppffrvwsjsvolqvpm7yjwh.streamlit.app/'
-
 SENDER_EMAIL = "rsomanchi@tns.org"
 RECEIVER_EMAIL = "ksuneha@tns.org"
 #SENDER_PASS = "TNS_SAKSHAM@2025" 
