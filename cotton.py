@@ -6,25 +6,23 @@ import io
 from PIL import Image
 import zipfile
 
-# --- Admin Configuration ---
-# Only specified users will have access, no password required.
 ADMIN_USERS = {"ksuneha@tns.org", "rsomanchi@tns.org", "shifalis@tns.org"}
 
-# Set the directory to save responses
+
 SAVE_DIR = "responses"
 os.makedirs(SAVE_DIR, exist_ok=True)
 
-# Directory where images are saved
+
 PHOTOS_DIR = "photos"
 os.makedirs(PHOTOS_DIR, exist_ok=True)
 
-# Define the path for the persistent CSV file
+
 SAVE_CSV_PATH = os.path.join(SAVE_DIR, "all_survey_responses_persistent.csv")
 
 st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
 st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
 
-# --- Language Selection ---
+
 language = st.selectbox(
     "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
     ["English", "Hindi", "Marathi", "Gujarati"],
@@ -268,20 +266,20 @@ dict_translations = {
     },
 }
 
-# Define the questions using the keys from the dictionary
+
 questions = [str(i) for i in range(1, 104)]
 
-# Get the translations for the selected language
+
 labels = dict_translations.get(language, dict_translations["English"])
 
-# --- Input Field Definitions ---
+
 numeric_questions = list(set([
     "11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37",
     "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52",
     "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69",
     "79", "80", "83", "86", "92",
 ]))
-numeric_questions = [q for q in numeric_questions if q not in ["3", "6"]] # Mobile and Village are text
+numeric_questions = [q for q in numeric_questions if q not in ["3", "6"]] 
 
 yes_no_questions = ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "98", "99", "100", "101", "102", "103"]
 irrigation_source_options = ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"]
@@ -296,7 +294,7 @@ MULTISELECT_QUESTIONS = {
 }
 
 
-# --- Session State Initialization ---
+
 if 'responses' not in st.session_state:
     st.session_state.responses = {}
 if 'uploaded_photo_info' not in st.session_state:
@@ -308,7 +306,7 @@ if 'has_validation_error' not in st.session_state:
 if 'admin_logged_in' not in st.session_state:
     st.session_state.admin_logged_in = False
 
-# Initialize the DataFrame to store all responses AND LOAD EXISTING DATA
+
 if 'all_survey_data' not in st.session_state:
     if os.path.exists(SAVE_CSV_PATH):
         try:
@@ -337,7 +335,7 @@ if 'all_survey_data' not in st.session_state:
         st.info("No existing survey data found. Starting a new DataFrame.")
 
 
-# --- Questionnaire Form Section ---
+
 if not st.session_state.form_submitted_for_review:
     with st.form("questionnaire_form"):
         surveyor_name_label = ""
@@ -615,30 +613,30 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
             except Exception as e:
                 st.error(f"An error occurred while saving: {e}")
 
-# --- Admin Login Section (Modified: No Password) ---
+
 st.markdown("---")
 st.subheader("Admin Login (for Data Access)")
 
 if not st.session_state.admin_logged_in:
     with st.form("admin_login_form"):
-        admin_email = st.text_input("Admin Email").lower() # Convert to lowercase for consistent checking
+        admin_email = st.text_input("Admin Email").lower() 
         login_button = st.form_submit_button("Login")
 
         if login_button:
             if admin_email in ADMIN_USERS:
                 st.session_state.admin_logged_in = True
                 st.success("Admin login successful!")
-                st.rerun() # Rerun to hide login form and show admin sections
+                st.rerun() 
             else:
                 st.error("Invalid email. Please use an authorized admin email.")
 else:
     st.success(f"You are logged in as Admin ({st.session_state.get('last_admin_email', 'unknown')}).")
     if st.button("Logout"):
         st.session_state.admin_logged_in = False
-        st.session_state.pop('last_admin_email', None) # Clear last logged-in email
+        st.session_state.pop('last_admin_email', None) 
         st.rerun()
 
-# --- Admin Sections (Conditional Display) ---
+
 if st.session_state.admin_logged_in:
     st.markdown("---")
     st.subheader("Admin Download")
@@ -674,7 +672,7 @@ if st.session_state.admin_logged_in:
         else:
             st.info("No survey data collected yet to download.")
 
-    # --- View Submitted Responses Section ---
+    
     st.markdown("---")
     st.subheader("View Submitted Responses")
 
