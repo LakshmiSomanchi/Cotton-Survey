@@ -2,73 +2,52 @@ import streamlit as st
 import pandas as pd
 import datetime
 import os
-import json
-import io
-from PIL import Image
-import zipfile
 
+# --- Configuration & Constants ---
 ADMIN_USERS = {"ksuneha@tns.org", "rsomanchi@tns.org", "shifalis@tns.org"}
-
-DRAFT_FILE = f'drafts_{st.session_state.get("user_id", "anonymous")}.json'
-
-def save_draft(data):
-    with open(DRAFT_FILE, 'w') as f:
-        json.dump(data, f)
-
-def load_draft():
-    if os.path.exists(DRAFT_FILE):
-        with open(DRAFT_FILE, 'r') as f:
-            return json.load(f)
-    return {}
-
-# Load draft at start
-if 'form_data' not in st.session_state:
-    st.session_state.form_data = load_draft()
-
-# Your form
-with st.form("cotton_survey"):
-    name = st.text_input("Name", value=st.session_state.form_data.get('name', ''))
-    field1 = st.text_input("Field1", value=st.session_state.form_data.get('field1', ''))
-    # ... other fields ...
-    submitted = st.form_submit_button("Submit")
-    save_draft_btn = st.form_submit_button("Save as Draft")
-
-    if save_draft_btn:
-        st.session_state.form_data = {'name': name, 'field1': field1}
-        save_draft(st.session_state.form_data)
-        st.success("Draft saved!")
-
-    if submitted:
-        try:
-            # Try to submit to your main backend/service here
-            submit_to_backend({'name': name, 'field1': field1})
-            st.success("Form submitted!")
-            os.remove(DRAFT_FILE)  # Remove draft after successful submit
-        except Exception as e:
-            st.session_state.form_data = {'name': name, 'field1': field1}
-            save_draft(st.session_state.form_data)
-            st.error("No internet connection. Saved as draft. Please submit later.")
-
 SAVE_DIR = "responses"
-os.makedirs(SAVE_DIR, exist_ok=True)
-
-
 PHOTOS_DIR = "photos"
-os.makedirs(PHOTOS_DIR, exist_ok=True)
-
-
 SAVE_CSV_PATH = os.path.join(SAVE_DIR, "all_survey_responses_persistent.csv")
 
+# Create directories if they don't exist
+os.makedirs(SAVE_DIR, exist_ok=True)
+os.makedirs(PHOTOS_DIR, exist_ok=True)
+
+# Set Streamlit page config
 st.set_page_config(page_title="Cotton Farming Questionnaire", layout="wide")
 st.title("🌾 Cotton Farming Questionnaire (किसान सर्वे)")
 
+# --- Session State Initialization ---
+def initialize_session_state():
+    """Initializes all necessary session state variables."""
+    if 'responses' not in st.session_state:
+        st.session_state.responses = {}
+    if 'uploaded_photo_info' not in st.session_state:
+        st.session_state.uploaded_photo_info = None
+    if 'form_submitted_for_review' not in st.session_state:
+        st.session_state.form_submitted_for_review = False
+    if 'has_validation_error' not in st.session_state:
+        st.session_state.has_validation_error = False
+    if 'admin_logged_in' not in st.session_state:
+        st.session_state.admin_logged_in = False
+    if 'all_survey_data' not in st.session_state:
+        if os.path.exists(SAVE_CSV_PATH):
+            try:
+                st.session_state.all_survey_data = pd.read_csv(SAVE_CSV_PATH, encoding='utf-8')
+                st.info(f"Loaded {len(st.session_state.all_survey_data)} existing responses.")
+            except pd.errors.EmptyDataError:
+                st.session_state.all_survey_data = pd.DataFrame()
+                st.info("Existing CSV found but was empty. Initializing new DataFrame.")
+            except Exception as e:
+                st.error(f"Error loading existing survey data: {e}. Starting with an empty DataFrame.")
+                st.session_state.all_survey_data = pd.DataFrame()
+        else:
+            st.session_state.all_survey_data = pd.DataFrame()
+            st.info("No existing survey data found. Starting a new DataFrame.")
 
-language = st.selectbox(
-    "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
-    ["English", "Hindi", "Marathi", "Gujarati"],
-    key="language_select"
-)
+initialize_session_state()
 
+# --- Translations Dictionary ---
 dict_translations = {
     "English": {
         "1": "Farmer Tracenet Code", "2": "Farmer Full Name", "3": "Mobile no.", "4": "Gender",
@@ -127,6 +106,7 @@ dict_translations = {
         "101": "Involve family members (Women) in agricultural operations",
         "102": "Any community water harvesting structure (Y/N)",
         "103": "Use of soil moisture meter (Y/N)",
+        "surveyor_name_key": "Surveyor Name"
     },
     "Hindi": {
         "1": "किसान ट्रेसेनेट कोड", "2": "किसान का पूरा नाम", "3": "मोबाइल नंबर", "4": "लिंग",
@@ -157,7 +137,7 @@ dict_translations = {
         "55": "सिंचाई विधि का उपयोग किया गया", "56": "क्या कोई कृषि मशीनरी किराए पर ली गई है (हाँ/नहीं)",
         "57": "मशीनरी किराए पर लेने की लागत (रु.))/एकड़", "58": "स्थानीय श्रम लागत प्रति दिन",
         "59": "प्रवासी श्रम लागत प्रति दिन", "60": "बुवाई के दौरान आवश्यक श्रमिकों की संख्या/एकड़",
-        "61": "कटाई के दौरान आवश्यक श्रमिकों की संख्या/एकड़",
+        "61": "कटाई के दौरान आवश्यक श्रमिकों की संख्या/एकर",
         "62": "कटाई का समय (1st, 2nd और 3rd पिकिंग) (महीना)",
         "63": "खरपतवार विधि का उपयोग किया गया (मैनुअल/मैकेनिकल)", "64": "खरपतवार लागत/एकड़",
         "65": "पलवार लागत/एकर", "66": "जुताई का अभ्यास किया गया", "67": "जुताई लागत/एकड़",
@@ -185,6 +165,7 @@ dict_translations = {
         "101": "कृषि कार्यों में परिवार के सदस्यों (महिलाओं) को शामिल करना",
         "102": "कोई सामुदायिक जल संचयन संरचना (हाँ/नहीं)",
         "103": "मृदा नमी मीटर का उपयोग (हाँ/नाही)",
+        "surveyor_name_key": "सर्वेयर का नाम"
     },
     "Marathi": {
         "1": "शेतकरी ट्रेसनेट कोड", "2": "शेतकऱ्याचे पूर्ण नाव", "3": "मोबाईल नंबर", "4": "लिंग",
@@ -243,6 +224,7 @@ dict_translations = {
         "101": "कृषी कार्यांमध्ये कुटुंबातील सदस्यांना (महिलांना) सामील करणे",
         "102": "कोणतीही सामुदायिक जल संचयन रचना (होय/नाही)",
         "103": "मातीतील ओलावा मीटरचा वापर (होय/नाही)",
+        "surveyor_name_key": "सर्वेयरचे नाव"
     },
     "Gujarati": {
         "1": "ખેડૂત ટ્રેસનેટ કોડ", "2": "ખેડૂતનું પૂરું નામ", "3": "મોબાઇલ નંબર", "4": "લિંગ",
@@ -302,272 +284,205 @@ dict_translations = {
         "100": "કામદારો માટે શૌચાલયની કોઈ જોગવાઈ",
         "101": "ખેતીકામમાં કુટુંબના સભ્યો (મહિલાઓ) ને સામેલ કરો છો",
         "102": "કોઈપણ સામુદાયિક જળ સંચય માળખું (હા/ના)",
-        "103": "માટી ભેજ મીટરનો ઉપયોગ (હા/ના)"
+        "103": "માટી ભેજ મીટરનો ઉપયોગ (હા/ના)",
+        "surveyor_name_key": "સર્વેયરનું નામ"
     },
 }
 
+# Define the form structure using a dictionary.
+all_questions = [str(i) for i in range(1, 104)]
+FORM_FIELDS = {
+    # Text Inputs
+    "1": {"type": "text", "required": True},
+    "2": {"type": "text", "required": True},
+    "3": {"type": "text", "required": True},
+    "5": {"type": "text", "required": False}, "6": {"type": "text", "required": True},
+    "7": {"type": "text", "required": False}, "8": {"type": "text", "required": True},
+    "9": {"type": "text", "required": True}, "10": {"type": "text", "required": True},
+    "18": {"type": "text", "required": False}, "19": {"type": "text", "required": False},
+    "27": {"type": "text", "required": False}, "28": {"type": "text", "required": False},
+    "31": {"type": "text", "required": False}, "35": {"type": "text", "required": True},
+    "36": {"type": "text", "required": False}, "44": {"type": "text", "required": False},
+    "45": {"type": "text", "required": False}, "70": {"type": "text", "required": False},
+    "71": {"type": "text", "required": False}, "72": {"type": "text", "required": False},
+    "73": {"type": "text", "required": False}, "74": {"type": "text", "required": False},
+    "76": {"type": "text", "required": False}, "77": {"type": "text", "required": False},
+    "81": {"type": "text", "required": False}, "82": {"type": "text", "required": False},
+    "90": {"type": "text", "required": False}, "95": {"type": "text", "required": False},
+    "62": {"type": "text_with_placeholder", "placeholder": "e.g., month 1, month 2, month 3"},
+    
+    # Select Boxes
+    "4": {"type": "selectbox", "options": ["Male", "Female", "Others"]},
+    "24": {"type": "selectbox", "options": ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"]},
+    "55": {"type": "selectbox", "options": ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other"]},
+    "63": {"type": "selectbox", "options": ["Manual", "Mechanical", "Both", "Other"]},
 
-questions = [str(i) for i in range(1, 104)]
-
-
-labels = dict_translations.get(language, dict_translations["English"])
-
-
-numeric_questions = list(set([
-    "11", "12", "13", "14", "15", "16", "17", "20", "21", "22", "25", "26", "34", "37",
-    "38", "39", "40", "41", "42", "43", "46", "47", "48", "49", "50", "51", "52",
-    "53", "54", "57", "58", "59", "60", "61", "64", "65", "66", "67", "68", "69",
-    "79", "80", "83", "86", "92",
-]))
-numeric_questions = [q for q in numeric_questions if q not in ["3", "6"]] 
-
-yes_no_questions = ["29", "30", "33", "56", "75", "78", "84", "85", "87", "88", "89", "91", "93", "96", "97", "98", "99", "100", "101", "102", "103"]
-irrigation_source_options = ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"]
-irrigation_method_options = ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other"]
-weeding_method_options = ["Manual", "Mechanical", "Both", "Other"]
-gender_options = ["Male", "Female", "Others"]
-
-MULTISELECT_QUESTIONS = {
-    "23": ["Certified", "Non-Certified", "IC1", "IC2", "Others"],
-    "32": ["FPO", "FPC", "SHG", "Others"],
-    "94": ["Fuel", "Cattle feed", "Biochar", "In-situ composting", "Burning"],
+    # Yes/No Select Boxes
+    "29": {"type": "yes_no"}, "30": {"type": "yes_no"}, "33": {"type": "yes_no"}, "56": {"type": "yes_no"},
+    "75": {"type": "yes_no"}, "78": {"type": "yes_no"}, "84": {"type": "yes_no"}, "85": {"type": "yes_no"},
+    "87": {"type": "yes_no"}, "88": {"type": "yes_no"}, "89": {"type": "yes_no"}, "91": {"type": "yes_no"},
+    "93": {"type": "yes_no"}, "96": {"type": "yes_no"}, "97": {"type": "yes_no"}, "98": {"type": "yes_no"},
+    "99": {"type": "yes_no"}, "100": {"type": "yes_no"}, "101": {"type": "yes_no"}, "102": {"type": "yes_no"},
+    "103": {"type": "yes_no"},
+    
+    # Multiselects
+    "23": {"type": "multiselect", "options": ["Certified", "Non-Certified", "IC1", "IC2", "Others"]},
+    "32": {"type": "multiselect", "options": ["FPO", "FPC", "SHG", "Others"]},
+    "94": {"type": "multiselect", "options": ["Fuel", "Cattle feed", "Biochar", "In-situ composting", "Burning"]},
+    
+    # Number Inputs
+    "11": {"type": "number", "required": False}, "12": {"type": "number", "required": False},
+    "13": {"type": "number", "required": False}, "14": {"type": "number", "required": False},
+    "15": {"type": "number", "required": False}, "16": {"type": "number", "required": False},
+    "17": {"type": "number", "required": False}, "20": {"type": "number", "required": False},
+    "21": {"type": "number", "required": False}, "22": {"type": "number", "required": False},
+    "25": {"type": "number", "required": False}, "26": {"type": "number", "required": False},
+    "34": {"type": "number", "required": True}, "37": {"type": "number", "required": True},
+    "38": {"type": "number", "required": False}, "39": {"type": "number", "required": True},
+    "40": {"type": "number", "required": False}, "41": {"type": "number", "required": True},
+    "42": {"type": "number", "required": True}, "43": {"type": "number", "required": False},
+    "46": {"type": "number", "required": False}, "47": {"type": "number", "required": False},
+    "48": {"type": "number", "required": False}, "49": {"type": "number", "required": False},
+    "50": {"type": "number", "required": False}, "51": {"type": "number", "required": False},
+    "52": {"type": "number", "required": False}, "53": {"type": "number", "required": False},
+    "54": {"type": "number", "required": False}, "57": {"type": "number", "required": False},
+    "58": {"type": "number", "required": False}, "59": {"type": "number", "required": False},
+    "60": {"type": "number", "required": False}, "61": {"type": "number", "required": False},
+    "64": {"type": "number", "required": False}, "65": {"type": "number", "required": False},
+    "66": {"type": "number", "required": False}, "67": {"type": "number", "required": False},
+    "68": {"type": "number", "required": False}, "69": {"type": "number", "required": False},
+    "79": {"type": "number", "required": False}, "80": {"type": "number", "required": False},
+    "83": {"type": "number", "required": False}, "86": {"type": "number", "required": False},
+    "92": {"type": "number", "required": False},
 }
 
 
-
-if 'responses' not in st.session_state:
-    st.session_state.responses = {}
-if 'uploaded_photo_info' not in st.session_state:
-    st.session_state.uploaded_photo_info = None
-if 'form_submitted_for_review' not in st.session_state:
-    st.session_state.form_submitted_for_review = False
-if 'has_validation_error' not in st.session_state:
-    st.session_state.has_validation_error = False
-if 'admin_logged_in' not in st.session_state:
-    st.session_state.admin_logged_in = False
-
-
-if 'all_survey_data' not in st.session_state:
-    if os.path.exists(SAVE_CSV_PATH):
-        try:
-            st.session_state.all_survey_data = pd.read_csv(SAVE_CSV_PATH)
-            st.info(f"Loaded {len(st.session_state.all_survey_data)} existing responses.")
-        except pd.errors.EmptyDataError:
-            initial_columns = ["Timestamp", "Surveyor Name"]
-            for q_key in questions:
-                initial_columns.append(labels.get(q_key, f"Question {q_key}"))
-            initial_columns.append("Others Gender Specify")
-            st.session_state.all_survey_data = pd.DataFrame(columns=initial_columns)
-            st.info("Existing CSV found but was empty. Initializing new DataFrame.")
-        except Exception as e:
-            st.error(f"Error loading existing survey data: {e}. Starting with an empty DataFrame.")
-            initial_columns = ["Timestamp", "Surveyor Name"]
-            for q_key in questions:
-                initial_columns.append(labels.get(q_key, f"Question {q_key}"))
-            initial_columns.append("Others Gender Specify")
-            st.session_state.all_survey_data = pd.DataFrame(columns=initial_columns)
-    else:
-        initial_columns = ["Timestamp", "Surveyor Name"]
-        for q_key in questions:
-            initial_columns.append(labels.get(q_key, f"Question {q_key}"))
-        initial_columns.append("Others Gender Specify")
-        st.session_state.all_survey_data = pd.DataFrame(columns=initial_columns)
-        st.info("No existing survey data found. Starting a new DataFrame.")
-
-
+# --- Main App Logic ---
+# Sidebar for language selection
+language = st.sidebar.selectbox(
+    "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
+    ["English", "Hindi", "Marathi", "Gujarati"],
+    key="language_select"
+)
+labels = dict_translations.get(language, dict_translations["English"])
+surveyor_name_label = labels.get("surveyor_name_key", "Surveyor Name")
 
 if not st.session_state.form_submitted_for_review:
     with st.form("questionnaire_form"):
-        surveyor_name_label = ""
-        if language == "English":
-            surveyor_name_label = "Surveyor Name"
-        elif language == "Hindi":
-            surveyor_name_label = "सर्वेयर का नाम"
-        elif language == "Marathi":
-            surveyor_name_label = "सर्वेयरचे नाव"
-        elif language == "Gujarati":
-            surveyor_name_label = "સર્વેયરનું નામ"
-
+        # Surveyor Name input
         st.session_state.responses["surveyor_name"] = st.text_input(
             surveyor_name_label,
             key="surveyor_name_input",
             value=st.session_state.responses.get("surveyor_name", "")
         )
 
-        for question_key in questions:
-            question_text = labels.get(question_key, f"Question {question_key} (No translation)")
-            current_value = st.session_state.responses.get(question_key, "")
+        # Dynamically build the form based on FORM_FIELDS dictionary
+        for q_key in all_questions:
+            question_text = labels.get(q_key, f"Question {q_key} (No translation)")
+            field_config = FORM_FIELDS.get(q_key, {"type": "text"})
+            current_value = st.session_state.responses.get(q_key, "")
 
-            if question_key in MULTISELECT_QUESTIONS:
-                selected_values = []
-                if isinstance(current_value, str) and current_value:
-                    selected_values = [v.strip() for v in current_value.split(',')]
-                elif isinstance(current_value, list):
-                    selected_values = current_value
-
-                selected_options = st.multiselect(
+            if field_config["type"] == "text":
+                st.session_state.responses[q_key] = st.text_input(
                     question_text,
-                    MULTISELECT_QUESTIONS[question_key],
-                    default=selected_values,
-                    key=f"question_{question_key}"
+                    key=f"question_{q_key}",
+                    value=current_value
                 )
-                st.session_state.responses[question_key] = ", ".join(selected_options) if selected_options else ""
-
-            elif question_key == "4":
-                default_index = 0
-                if current_value and current_value in gender_options:
-                    default_index = gender_options.index(current_value)
-
-                selected_gender = st.selectbox(
+            elif field_config["type"] == "number":
+                num_val = float(current_value) if str(current_value).replace('.', '', 1).isdigit() else 0.0
+                st.session_state.responses[q_key] = st.number_input(
                     question_text,
-                    gender_options,
-                    key=f"question_{question_key}",
+                    min_value=0.0,
+                    format="%.2f",
+                    key=f"question_{q_key}",
+                    value=num_val
+                )
+            elif field_config["type"] == "yes_no":
+                default_index = 0 if current_value == "Yes" or not current_value else 1
+                st.session_state.responses[q_key] = st.selectbox(
+                    question_text,
+                    ["Yes", "No"],
+                    key=f"question_{q_key}",
                     index=default_index
                 )
-                st.session_state.responses[question_key] = selected_gender
-
-                if selected_gender == "Others":
+            elif field_config["type"] == "selectbox":
+                options = field_config["options"]
+                default_index = options.index(current_value) if current_value in options else 0
+                selected_option = st.selectbox(
+                    question_text,
+                    options,
+                    key=f"question_{q_key}",
+                    index=default_index
+                )
+                st.session_state.responses[q_key] = selected_option
+                if q_key == "4" and selected_option == "Others":
                     st.session_state.responses["others_gender"] = st.text_input(
                         "If selected 'Others', please specify:",
                         key="others_gender_specify",
                         value=st.session_state.responses.get("others_gender", "")
                     )
-                else:
+                elif q_key == "4" and selected_option != "Others":
                     st.session_state.responses.pop("others_gender", None)
 
-            elif question_key == "24":
-                default_index = 0
-                if current_value and current_value in irrigation_source_options:
-                    default_index = irrigation_source_options.index(current_value)
-                st.session_state.responses[question_key] = st.selectbox(
+            elif field_config["type"] == "multiselect":
+                options = field_config["options"]
+                selected_values = current_value.split(', ') if isinstance(current_value, str) and current_value else []
+                selected_options = st.multiselect(
                     question_text,
-                    irrigation_source_options,
-                    key=f"question_{question_key}",
-                    index=default_index
+                    options,
+                    default=selected_values,
+                    key=f"question_{q_key}"
                 )
-
-            elif question_key == "55":
-                default_index = 0
-                if current_value and current_value in irrigation_method_options:
-                    default_index = irrigation_method_options.index(current_value)
-                st.session_state.responses[question_key] = st.selectbox(
-                    question_text,
-                    irrigation_method_options,
-                    key=f"question_{question_key}",
-                    index=default_index
-                )
-
-            elif question_key == "63":
-                default_index = 0
-                if current_value and current_value in weeding_method_options:
-                    default_index = weeding_method_options.index(current_value)
-                st.session_state.responses[question_key] = st.selectbox(
-                    question_text,
-                    weeding_method_options,
-                    key=f"question_{question_key}",
-                    index=default_index
-                )
-
-            elif question_key == "62":
-                st.session_state.responses[question_key] = st.text_input(
-                    question_text,
-                    placeholder="e.g., month 1, month 2, month 3",
-                    key=f"question_{question_key}",
-                    value=current_value
-                )
-
-            elif question_key in yes_no_questions:
-                default_index = 0
-                if current_value == "No":
-                    default_index = 1
-                elif current_value == "":
-                    current_value = "Yes"
-
-                st.session_state.responses[question_key] = st.selectbox(
-                    question_text,
-                    ["Yes", "No"],
-                    key=f"question_{question_key}",
-                    index=default_index
-                )
+                st.session_state.responses[q_key] = ", ".join(selected_options) if selected_options else ""
             
-            elif question_key in numeric_questions:
-                num_val = 0.0
-                try:
-                    if current_value is not None and str(current_value).replace('.', '', 1).isdigit():
-                        num_val = float(current_value)
-                except ValueError:
-                    num_val = 0.0
-                
-                st.session_state.responses[question_key] = st.number_input(
+            elif field_config["type"] == "text_with_placeholder":
+                st.session_state.responses[q_key] = st.text_input(
                     question_text,
-                    min_value=0.0,
-                    format="%.2f",
-                    key=f"question_{question_key}",
-                    value=num_val
-                )
-            else:
-                st.session_state.responses[question_key] = st.text_input(
-                    question_text,
-                    key=f"question_{question_key}",
+                    placeholder=field_config["placeholder"],
+                    key=f"question_{q_key}",
                     value=current_value
                 )
 
+        # Photo uploader
         uploaded_photo = st.file_uploader(
             "Upload a photo (optional):",
             type=["jpg", "jpeg", "png"],
             key="uploaded_photo_form",
         )
-
         if uploaded_photo:
             st.session_state.uploaded_photo_info = {
                 "name": uploaded_photo.name,
                 "data": uploaded_photo.getvalue(),
                 "type": uploaded_photo.type
             }
-        elif st.session_state.uploaded_photo_info and not uploaded_photo:
+        elif st.session_state.uploaded_photo_info:
             st.image(st.session_state.uploaded_photo_info["data"], caption="Previously uploaded photo", width=100)
             if st.button("Clear Photo", key="clear_photo_button"):
                 st.session_state.uploaded_photo_info = None
                 st.rerun()
 
+        # Submit button
         if st.form_submit_button("Review and Proceed"):
             st.session_state.has_validation_error = False
-
-            if not st.session_state.responses.get("surveyor_name"):
-                st.error("Surveyor Name is required.")
-                st.session_state.has_validation_error = True
-
-            required_fields = ["1", "2", "3", "4", "6", "8", "9", "10", "34", "35", "37", "39", "41", "42"]
+            # Validation logic
+            required_fields = [k for k, v in FORM_FIELDS.items() if v.get("required")]
             for field in required_fields:
                 val = st.session_state.responses.get(field)
-                if val is None or val == "" or \
-                   (isinstance(val, (int, float)) and val == 0 and field in ["34", "37", "39", "41", "42"]):
+                if not val or (isinstance(val, (int, float)) and val <= 0 and field in ["34", "37", "39", "41", "42"]):
                     st.error(f"Field '{labels[field]}' is required.")
                     st.session_state.has_validation_error = True
-
+            
+            # Specific validation for mobile number
             phone_number = str(st.session_state.responses.get("3", "")).strip()
             if not phone_number.isdigit() or len(phone_number) != 10:
                 st.error("Mobile no. must be exactly 10 digits.")
                 st.session_state.has_validation_error = True
-            
-            for field in numeric_questions:
-                val = st.session_state.responses.get(field)
-                try:
-                    if val is not None and str(val).strip() != "":
-                        num_val = float(val)
-                        if num_val < 0:
-                            st.error(f"Field '{labels[field]}' must be a non-negative number.")
-                            st.session_state.has_validation_error = True
-                except (ValueError, TypeError):
-                    st.error(f"Field '{labels[field]}' must be a valid number.")
-                    st.session_state.has_validation_error = True
 
+            # Specific validation for harvesting time
             harvesting_time = st.session_state.responses.get("62")
-            if harvesting_time:
-                months = [m.strip() for m in harvesting_time.split(",") if m.strip()]
-                if len(months) != 3:
-                    st.error(f"Field '{labels['62']}' must contain exactly 3 months, separated by commas (e.g., month 1, month 2, month 3).")
-                    st.session_state.has_validation_error = True
+            if harvesting_time and len([m.strip() for m in harvesting_time.split(",") if m.strip()]) != 3:
+                st.error(f"Field '{labels['62']}' must contain exactly 3 months, separated by commas.")
+                st.session_state.has_validation_error = True
 
             if not st.session_state.has_validation_error:
                 st.session_state.form_submitted_for_review = True
@@ -578,23 +493,14 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
     st.subheader("Review Your Responses")
     st.write("Please review the information below. If everything is correct, click 'Confirm and Save'.")
 
+    # Display responses for review
+    st.write(f"**{surveyor_name_label}:** {st.session_state.responses.get('surveyor_name')}")
     for key, value in st.session_state.responses.items():
-        if key == "surveyor_name":
-            surveyor_name_label = ""
-            if language == "English":
-                surveyor_name_label = "Surveyor Name"
-            elif language == "Hindi":
-                surveyor_name_label = "सर्वेयर का नाम"
-            elif language == "Marathi":
-                surveyor_name_label = "सर्वेयरचे नाव"
-            elif language == "Gujarati":
-                surveyor_name_label = "સર્વેયરનું નામ"
-            st.write(f"**{surveyor_name_label}:** {value}")
-        elif key in questions:
+        if key in all_questions:
             st.write(f"**{labels.get(key, f'Question {key}')}:** {value}")
         elif key == "others_gender":
             st.write(f"**If selected 'Others', please specify:** {value}")
-
+    
     if st.session_state.uploaded_photo_info:
         st.image(st.session_state.uploaded_photo_info["data"], caption="Uploaded Photo", width=200)
 
@@ -604,47 +510,41 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
             st.session_state.form_submitted_for_review = False
             st.rerun()
     with col2:
-        now = datetime.datetime.now()
-        timestamp = now.strftime("%Y%m%d_%H%M%S")
-        farmer_name_for_filename = "".join(filter(str.isalnum, st.session_state.responses.get("2", "unknown_farmer"))).lower()
-        photo_ext = "jpg"
-        if st.session_state.uploaded_photo_info and st.session_state.uploaded_photo_info["type"]:
-            if "png" in st.session_state.uploaded_photo_info["type"]:
-                photo_ext = "png"
-            elif "jpeg" in st.session_state.uploaded_photo_info["type"]:
-                photo_ext = "jpeg"
-        photo_name = f"photo_{farmer_name_for_filename}_{timestamp}.{photo_ext}"
-
-
         if st.button("Confirm and Save"):
             try:
+                # Prepare data for DataFrame
+                timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 current_response_data = {
                     "Timestamp": timestamp,
                     "Surveyor Name": st.session_state.responses.get("surveyor_name")
                 }
-                for q_key in questions:
+                for q_key in all_questions:
                     current_response_data[labels.get(q_key, f"Question {q_key}")] = st.session_state.responses.get(q_key)
                 if "others_gender" in st.session_state.responses:
                     current_response_data["Others Gender Specify"] = st.session_state.responses.get("others_gender")
-                else:
-                    current_response_data["Others Gender Specify"] = ""
-
+                
                 new_row_df = pd.DataFrame([current_response_data])
-                for col in new_row_df.columns:
-                    if col not in st.session_state.all_survey_data.columns:
-                        st.session_state.all_survey_data[col] = None
-                st.session_state.all_survey_data = pd.concat([st.session_state.all_survey_data, new_row_df], ignore_index=True)
+                
+                # Align columns and save
+                if st.session_state.all_survey_data.empty:
+                    st.session_state.all_survey_data = new_row_df
+                else:
+                    st.session_state.all_survey_data = pd.concat([st.session_state.all_survey_data, new_row_df], ignore_index=True)
                 
                 st.session_state.all_survey_data.to_csv(SAVE_CSV_PATH, index=False, encoding='utf-8')
-
+                
+                # Save photo logic
                 if st.session_state.uploaded_photo_info:
+                    farmer_name_for_filename = "".join(filter(str.isalnum, st.session_state.responses.get("2", "unknown_farmer"))).lower()
+                    photo_name = f"photo_{farmer_name_for_filename}_{timestamp}.jpg"
                     photo_path = os.path.join(PHOTOS_DIR, photo_name)
                     with open(photo_path, "wb") as f:
                         f.write(st.session_state.uploaded_photo_info["data"])
-                    st.success(f"Survey data recorded and photo saved successfully! 🎉 Your photo is saved as {photo_name}.")
+                    st.success(f"Survey data recorded and photo saved as {photo_name}!")
                 else:
-                    st.success("Survey data recorded successfully! 🎉")
-
+                    st.success("Survey data recorded successfully!")
+                
+                # Clear and reset state for a new survey
                 st.session_state.responses = {}
                 st.session_state.uploaded_photo_info = None
                 st.session_state.form_submitted_for_review = False
@@ -653,59 +553,48 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
             except Exception as e:
                 st.error(f"An error occurred while saving: {e}")
 
-
+# --- Admin Section ---
 st.markdown("---")
 st.subheader("Admin Login (for Data Access)")
-
 if not st.session_state.admin_logged_in:
     with st.form("admin_login_form"):
-        admin_email = st.text_input("Admin Email").lower() 
+        admin_email = st.text_input("Admin Email").lower()
         login_button = st.form_submit_button("Login")
-
         if login_button:
             if admin_email in ADMIN_USERS:
                 st.session_state.admin_logged_in = True
+                st.session_state.last_admin_email = admin_email
                 st.success("Admin login successful!")
-                st.rerun() 
+                st.rerun()
             else:
                 st.error("Invalid email. Please use an authorized admin email.")
 else:
     st.success(f"You are logged in as Admin ({st.session_state.get('last_admin_email', 'unknown')}).")
     if st.button("Logout"):
         st.session_state.admin_logged_in = False
-        st.session_state.pop('last_admin_email', None) 
+        st.session_state.pop('last_admin_email', None)
         st.rerun()
 
-
-
+# Display responses for admin
 if st.session_state.admin_logged_in:
     st.markdown("---")
     st.subheader("View Submitted Responses")
-
     if not st.session_state.all_survey_data.empty:
-        # Convert Timestamp to datetime if not already
         df = st.session_state.all_survey_data.copy()
-df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors='coerce')
+        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors='coerce')
+        st.write("Showing all survey responses:")
+        st.dataframe(df)
 
-st.write("Showing all survey responses:")
-
-if not df.empty:
-    st.dataframe(df)
-else:
-    st.info("No submissions found.")
-
-search_term = st.text_input("Search responses (e.g., by Farmer Full Name or Mobile no.)", key="search_admin_view")
-if search_term:
-    filtered_df = df[
-        df.apply(
-            lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1
-        )
-    ]
-    if not filtered_df.empty:
-        st.write("Filtered Results:")
-        st.dataframe(filtered_df)
+        # Search functionality
+        search_term = st.text_input("Search responses", key="search_admin_view")
+        if search_term:
+            filtered_df = df[
+                df.apply(lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1)
+            ]
+            if not filtered_df.empty:
+                st.write("Filtered Results:")
+                st.dataframe(filtered_df)
+            else:
+                st.info("No matching responses found.")
     else:
-        st.info("No matching responses found.")
-
-
-
+        st.info("No submissions found.")
