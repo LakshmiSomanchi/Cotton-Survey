@@ -640,50 +640,31 @@ else:
 if st.session_state.admin_logged_in:
     st.markdown("---")
     st.subheader("Admin Download")
+    # (Keep your download code as is...)
 
-    def create_zip_archive(csv_data_buffer, photo_dir):
-        zip_buffer = io.BytesIO()
-        with zipfile.ZipFile(zip_buffer, "a", zipfile.ZIP_DEFLATED, False) as zip_file:
-            zip_file.writestr("all_survey_responses.csv", csv_data_buffer.getvalue())
-
-            for folder, _, files in os.walk(photo_dir):
-                for file in files:
-                    if file.endswith((".jpg", ".jpeg", ".png")):
-                        file_path = os.path.join(folder, file)
-                        zip_file.write(file_path, os.path.relpath(file_path, photo_dir))
-        zip_buffer.seek(0)
-        return zip_buffer.getvalue()
-
-    if st.button("Download All Data (CSV & Photos)", key="download_all_admin"):
-        if not st.session_state.all_survey_data.empty:
-            csv_buffer = io.StringIO()
-            st.session_state.all_survey_data.to_csv(csv_buffer, index=False, encoding='utf-8')
-            csv_buffer.seek(0)
-
-            zip_data = create_zip_archive(csv_buffer, PHOTOS_DIR)
-            st.download_button(
-                label="Click to Download ZIP",
-                data=zip_data,
-                file_name="all_survey_data.zip",
-                mime="application/zip",
-                key="download_button_admin"
-            )
-            st.success("Your data download is ready!")
-        else:
-            st.info("No survey data collected yet to download.")
-
-    
     st.markdown("---")
-    st.subheader("View Submitted Responses")
-
+    st.subheader("View Submitted Responses (Last 7 Days)")
+    
     if not st.session_state.all_survey_data.empty:
-        st.write("Here are all the survey responses submitted so far:")
-        st.dataframe(st.session_state.all_survey_data)
+        # Filter to last 7 days
+        df = st.session_state.all_survey_data.copy()
+        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors='coerce')
+
+        now = datetime.datetime.now()
+        cutoff = now - datetime.timedelta(days=7)
+        recent_df = df[df["Timestamp"] >= cutoff]
+
+        st.write(f"Showing responses from last 7 days ({cutoff.strftime('%Y-%m-%d')} to {now.strftime('%Y-%m-%d')})")
+
+        if not recent_df.empty:
+            st.dataframe(recent_df)
+        else:
+            st.info("No submissions found in the last 7 days.")
 
         search_term = st.text_input("Search responses (e.g., by Farmer Full Name or Mobile no.)", key="search_admin_view")
         if search_term:
-            filtered_df = st.session_state.all_survey_data[
-                st.session_state.all_survey_data.apply(
+            filtered_df = recent_df[
+                recent_df.apply(
                     lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1
                 )
             ]
