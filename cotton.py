@@ -2,12 +2,52 @@ import streamlit as st
 import pandas as pd
 import datetime
 import os
+import json
 import io
 from PIL import Image
 import zipfile
 
 ADMIN_USERS = {"ksuneha@tns.org", "rsomanchi@tns.org", "shifalis@tns.org"}
 
+DRAFT_FILE = f'drafts_{st.session_state.get("user_id", "anonymous")}.json'
+
+def save_draft(data):
+    with open(DRAFT_FILE, 'w') as f:
+        json.dump(data, f)
+
+def load_draft():
+    if os.path.exists(DRAFT_FILE):
+        with open(DRAFT_FILE, 'r') as f:
+            return json.load(f)
+    return {}
+
+# Load draft at start
+if 'form_data' not in st.session_state:
+    st.session_state.form_data = load_draft()
+
+# Your form
+with st.form("cotton_survey"):
+    name = st.text_input("Name", value=st.session_state.form_data.get('name', ''))
+    field1 = st.text_input("Field1", value=st.session_state.form_data.get('field1', ''))
+    # ... other fields ...
+    submitted = st.form_submit_button("Submit")
+    save_draft_btn = st.form_submit_button("Save as Draft")
+
+    if save_draft_btn:
+        st.session_state.form_data = {'name': name, 'field1': field1}
+        save_draft(st.session_state.form_data)
+        st.success("Draft saved!")
+
+    if submitted:
+        try:
+            # Try to submit to your main backend/service here
+            submit_to_backend({'name': name, 'field1': field1})
+            st.success("Form submitted!")
+            os.remove(DRAFT_FILE)  # Remove draft after successful submit
+        except Exception as e:
+            st.session_state.form_data = {'name': name, 'field1': field1}
+            save_draft(st.session_state.form_data)
+            st.error("No internet connection. Saved as draft. Please submit later.")
 
 SAVE_DIR = "responses"
 os.makedirs(SAVE_DIR, exist_ok=True)
@@ -666,5 +706,6 @@ if search_term:
         st.dataframe(filtered_df)
     else:
         st.info("No matching responses found.")
+
 
 
