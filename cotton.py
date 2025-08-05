@@ -637,46 +637,34 @@ else:
         st.rerun()
 
 
-import datetime
 
 if st.session_state.admin_logged_in:
     st.markdown("---")
-    st.subheader("View Submitted Responses (Last 7 Days)")
+    st.subheader("View Submitted Responses")
 
     if not st.session_state.all_survey_data.empty:
         # Convert Timestamp to datetime if not already
         df = st.session_state.all_survey_data.copy()
-        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors='coerce')
+df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors='coerce')
 
-        now = datetime.datetime.now()
-        cutoff = now - datetime.timedelta(days=7)
-        recent_df = df[df["Timestamp"] >= cutoff]
+st.write("Showing all survey responses:")
 
-        st.write(f"Showing responses from last 7 days ({cutoff.strftime('%Y-%m-%d')} to {now.strftime('%Y-%m-%d')})")
-        
-        if not recent_df.empty:
-            st.dataframe(recent_df)
-        else:
-            st.info("No submissions found in the last 7 days.")
+if not df.empty:
+    st.dataframe(df)
+else:
+    st.info("No submissions found.")
 
-        # Search functionality within the last week
-        search_term = st.text_input("Search responses (e.g., by Farmer Full Name or Mobile no.)", key="search_admin_view")
-        if search_term:
-            filtered_df = recent_df[
-                recent_df.apply(
-                    lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1
-                )
-            ]
-            if not filtered_df.empty:
-                st.write("Filtered Results:")
-                st.dataframe(filtered_df)
-                # Optional: Show details of a selected form
-                selected_idx = st.selectbox("Select a row to view details", filtered_df.index)
-                if selected_idx is not None:
-                    st.subheader("Selected Form Details")
-                    st.json(filtered_df.loc[selected_idx].to_dict())
-            else:
-                st.info("No matching responses found.")
+search_term = st.text_input("Search responses (e.g., by Farmer Full Name or Mobile no.)", key="search_admin_view")
+if search_term:
+    filtered_df = df[
+        df.apply(
+            lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1
+        )
+    ]
+    if not filtered_df.empty:
+        st.write("Filtered Results:")
+        st.dataframe(filtered_df)
     else:
-        st.info("No survey responses have been submitted yet.")
+        st.info("No matching responses found.")
+
 
