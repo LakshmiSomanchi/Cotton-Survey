@@ -2,6 +2,9 @@ import streamlit as st
 import pandas as pd
 import datetime
 import os
+import io
+import shutil
+import zipfile
 
 # --- Configuration & Constants ---
 ADMIN_USERS = {"ksuneha@tns.org", "rsomanchi@tns.org", "shifalis@tns.org"}
@@ -156,7 +159,7 @@ dict_translations = {
         "91": "क्या किसी जल ट्रैकिंग डिवाइस का उपयोग किया जा रहा है (हाँ/नहीं)",
         "92": "पंप की क्षमता (एचपी में)", "93": "बफर जोन बनाए रखना (हाँ/नहीं)",
         "94": "फसल अवशेष का उपयोग (ईंधन/पशु चारा/बायोचार/इन-सीटू कंपोस्टिंग/जलाना)",
-        "95": "श्रमिकों को भुगतान का तरीका (नकद/ऑनलाइन)",
+        "95": "श्रमिकों को भुगतान का तरीका (रोख/ऑनलाइन)",
         "96": "पुरुष और महिला श्रमिकों के लिए कोई वेतन अंतर (हाँ/नहीं)",
         "97": "क्या किसी श्रम रजिस्टर का उपयोग किया जा रहा है (हाँ/नहीं)",
         "98": "श्रमिकों के लिए सुरक्षा-किट/प्राथमिक चिकित्सा की कोई व्यवस्था",
@@ -280,7 +283,7 @@ dict_translations = {
         "96": "પુરુષ અને મહિલા કામદારો માટે કોઈપણ વેતન તફાવત (હા/ના)",
         "97": "કોઈ શ્રમ રજીસ્ટરનો ઉપયોગ કરી રહ્યા છો (હા/ના)",
         "98": "કામદારો માટે સલામતી-કીટ/પ્રાથમિક સારવારની કોઈપણ વ્યવસ્થા",
-        "99": "કામદારો માટે આશ્રય અને સુરક્ષિત पिण्याच्या पाण्याची કોઈ જોગવાઈ",
+        "99": "કામદારો માટે આશ્રય અને સુરક્ષિત पिण्याच्या पाण्याची कोई જોગવાઈ",
         "100": "કામદારો માટે શૌચાલયની કોઈ જોગવાઈ",
         "101": "ખેતીકામમાં કુટુંબના સભ્યો (મહિલાઓ) ને સામેલ કરો છો",
         "102": "કોઈપણ સામુદાયિક જળ સંચય માળખું (હા/ના)",
@@ -292,70 +295,60 @@ dict_translations = {
 # Define the form structure using a dictionary.
 all_questions = [str(i) for i in range(1, 104)]
 FORM_FIELDS = {
-    # Text Inputs
-    "1": {"type": "text", "required": True},
-    "2": {"type": "text", "required": True},
-    "3": {"type": "text", "required": True},
+    "1": {"type": "text", "required": True}, "2": {"type": "text", "required": True},
+    "3": {"type": "text", "required": True}, "4": {"type": "selectbox", "options": ["Male", "Female", "Others"]},
     "5": {"type": "text", "required": False}, "6": {"type": "text", "required": True},
     "7": {"type": "text", "required": False}, "8": {"type": "text", "required": True},
     "9": {"type": "text", "required": True}, "10": {"type": "text", "required": True},
-    "18": {"type": "text", "required": False}, "19": {"type": "text", "required": False},
-    "27": {"type": "text", "required": False}, "28": {"type": "text", "required": False},
-    "31": {"type": "text", "required": False}, "35": {"type": "text", "required": True},
-    "36": {"type": "text", "required": False}, "44": {"type": "text", "required": False},
-    "45": {"type": "text", "required": False}, "70": {"type": "text", "required": False},
-    "71": {"type": "text", "required": False}, "72": {"type": "text", "required": False},
-    "73": {"type": "text", "required": False}, "74": {"type": "text", "required": False},
-    "76": {"type": "text", "required": False}, "77": {"type": "text", "required": False},
-    "81": {"type": "text", "required": False}, "82": {"type": "text", "required": False},
-    "90": {"type": "text", "required": False}, "95": {"type": "text", "required": False},
-    "62": {"type": "text_with_placeholder", "placeholder": "e.g., month 1, month 2, month 3"},
-    
-    # Select Boxes
-    "4": {"type": "selectbox", "options": ["Male", "Female", "Others"]},
-    "24": {"type": "selectbox", "options": ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"]},
-    "55": {"type": "selectbox", "options": ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other"]},
-    "63": {"type": "selectbox", "options": ["Manual", "Mechanical", "Both", "Other"]},
-
-    # Yes/No Select Boxes
-    "29": {"type": "yes_no"}, "30": {"type": "yes_no"}, "33": {"type": "yes_no"}, "56": {"type": "yes_no"},
-    "75": {"type": "yes_no"}, "78": {"type": "yes_no"}, "84": {"type": "yes_no"}, "85": {"type": "yes_no"},
-    "87": {"type": "yes_no"}, "88": {"type": "yes_no"}, "89": {"type": "yes_no"}, "91": {"type": "yes_no"},
-    "93": {"type": "yes_no"}, "96": {"type": "yes_no"}, "97": {"type": "yes_no"}, "98": {"type": "yes_no"},
-    "99": {"type": "yes_no"}, "100": {"type": "yes_no"}, "101": {"type": "yes_no"}, "102": {"type": "yes_no"},
-    "103": {"type": "yes_no"},
-    
-    # Multiselects
-    "23": {"type": "multiselect", "options": ["Certified", "Non-Certified", "IC1", "IC2", "Others"]},
-    "32": {"type": "multiselect", "options": ["FPO", "FPC", "SHG", "Others"]},
-    "94": {"type": "multiselect", "options": ["Fuel", "Cattle feed", "Biochar", "In-situ composting", "Burning"]},
-    
-    # Number Inputs
     "11": {"type": "number", "required": False}, "12": {"type": "number", "required": False},
     "13": {"type": "number", "required": False}, "14": {"type": "number", "required": False},
     "15": {"type": "number", "required": False}, "16": {"type": "number", "required": False},
-    "17": {"type": "number", "required": False}, "20": {"type": "number", "required": False},
+    "17": {"type": "number", "required": False}, "18": {"type": "text", "required": False},
+    "19": {"type": "text", "required": False}, "20": {"type": "number", "required": False},
     "21": {"type": "number", "required": False}, "22": {"type": "number", "required": False},
+    "23": {"type": "multiselect", "options": ["Certified", "Non-Certified", "IC1", "IC2", "Others"]},
+    "24": {"type": "selectbox", "options": ["Canal", "Well", "Borewell", "River", "Farm Pond", "Community Pond", "Rain-fed not irrigated"]},
     "25": {"type": "number", "required": False}, "26": {"type": "number", "required": False},
-    "34": {"type": "number", "required": True}, "37": {"type": "number", "required": True},
-    "38": {"type": "number", "required": False}, "39": {"type": "number", "required": True},
-    "40": {"type": "number", "required": False}, "41": {"type": "number", "required": True},
-    "42": {"type": "number", "required": True}, "43": {"type": "number", "required": False},
-    "46": {"type": "number", "required": False}, "47": {"type": "number", "required": False},
-    "48": {"type": "number", "required": False}, "49": {"type": "number", "required": False},
-    "50": {"type": "number", "required": False}, "51": {"type": "number", "required": False},
-    "52": {"type": "number", "required": False}, "53": {"type": "number", "required": False},
-    "54": {"type": "number", "required": False}, "57": {"type": "number", "required": False},
+    "27": {"type": "text", "required": False}, "28": {"type": "text", "required": False},
+    "29": {"type": "yes_no"}, "30": {"type": "yes_no"},
+    "31": {"type": "text", "required": False}, "32": {"type": "multiselect", "options": ["FPO", "FPC", "SHG", "Others"]},
+    "33": {"type": "yes_no"}, "34": {"type": "number", "required": True},
+    "35": {"type": "text", "required": True}, "36": {"type": "text", "required": False},
+    "37": {"type": "number", "required": True}, "38": {"type": "number", "required": False},
+    "39": {"type": "number", "required": True}, "40": {"type": "number", "required": False},
+    "41": {"type": "number", "required": True}, "42": {"type": "number", "required": True},
+    "43": {"type": "number", "required": False}, "44": {"type": "text", "required": False},
+    "45": {"type": "text", "required": False}, "46": {"type": "number", "required": False},
+    "47": {"type": "number", "required": False}, "48": {"type": "number", "required": False},
+    "49": {"type": "number", "required": False}, "50": {"type": "number", "required": False},
+    "51": {"type": "number", "required": False}, "52": {"type": "number", "required": False},
+    "53": {"type": "number", "required": False}, "54": {"type": "number", "required": False},
+    "55": {"type": "selectbox", "options": ["Drip irrigation", "Sprinkler irrigation", "Flood irrigation", "Ridge and Furrow Irrigation", "Other"]},
+    "56": {"type": "yes_no"}, "57": {"type": "number", "required": False},
     "58": {"type": "number", "required": False}, "59": {"type": "number", "required": False},
     "60": {"type": "number", "required": False}, "61": {"type": "number", "required": False},
+    "62": {"type": "text_with_placeholder", "placeholder": "e.g., month 1, month 2, month 3"},
+    "63": {"type": "selectbox", "options": ["Manual", "Mechanical", "Both", "Other"]},
     "64": {"type": "number", "required": False}, "65": {"type": "number", "required": False},
     "66": {"type": "number", "required": False}, "67": {"type": "number", "required": False},
     "68": {"type": "number", "required": False}, "69": {"type": "number", "required": False},
-    "79": {"type": "number", "required": False}, "80": {"type": "number", "required": False},
-    "83": {"type": "number", "required": False}, "86": {"type": "number", "required": False},
-    "92": {"type": "number", "required": False},
+    "70": {"type": "text", "required": False}, "71": {"type": "text", "required": False},
+    "72": {"type": "text", "required": False}, "73": {"type": "text", "required": False},
+    "74": {"type": "text", "required": False}, "75": {"type": "yes_no"},
+    "76": {"type": "text", "required": False}, "77": {"type": "text", "required": False},
+    "78": {"type": "yes_no"}, "79": {"type": "number", "required": False},
+    "80": {"type": "number", "required": False}, "81": {"type": "text", "required": False},
+    "82": {"type": "text", "required": False}, "83": {"type": "number", "required": False},
+    "84": {"type": "yes_no"}, "85": {"type": "yes_no"}, "86": {"type": "number", "required": False},
+    "87": {"type": "yes_no"}, "88": {"type": "yes_no"}, "89": {"type": "yes_no"},
+    "90": {"type": "text", "required": False}, "91": {"type": "yes_no"},
+    "92": {"type": "number", "required": False}, "93": {"type": "yes_no"},
+    "94": {"type": "multiselect", "options": ["Fuel", "Cattle feed", "Biochar", "In-situ composting", "Burning"]},
+    "95": {"type": "text", "required": False}, "96": {"type": "yes_no"},
+    "97": {"type": "yes_no"}, "98": {"type": "yes_no"}, "99": {"type": "yes_no"},
+    "100": {"type": "yes_no"}, "101": {"type": "yes_no"}, "102": {"type": "yes_no"},
+    "103": {"type": "yes_no"},
 }
-
 
 # --- Main App Logic ---
 # Sidebar for language selection
@@ -389,7 +382,7 @@ if not st.session_state.form_submitted_for_review:
                     value=current_value
                 )
             elif field_config["type"] == "number":
-                num_val = float(current_value) if str(current_value).replace('.', '', 1).isdigit() else 0.0
+                num_val = float(current_value) if isinstance(current_value, (int, float)) or (isinstance(current_value, str) and current_value.replace('.', '', 1).isdigit()) else 0.0
                 st.session_state.responses[q_key] = st.number_input(
                     question_text,
                     min_value=0.0,
@@ -398,7 +391,7 @@ if not st.session_state.form_submitted_for_review:
                     value=num_val
                 )
             elif field_config["type"] == "yes_no":
-                default_index = 0 if current_value == "Yes" or not current_value else 1
+                default_index = 0 if current_value == "Yes" else (1 if current_value == "No" else 0)
                 st.session_state.responses[q_key] = st.selectbox(
                     question_text,
                     ["Yes", "No"],
@@ -512,20 +505,32 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
     with col2:
         if st.button("Confirm and Save"):
             try:
-                # Prepare data for DataFrame
+                # 1. Define all possible columns for consistent DataFrame structure
+                all_possible_columns = (
+                    ["Timestamp", "Surveyor Name"]
+                    + [labels.get(q_key, f"Question {q_key}") for q_key in all_questions]
+                    + ["Others Gender Specify"]
+                )
+
+                # 2. Prepare data for the new DataFrame row
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 current_response_data = {
                     "Timestamp": timestamp,
                     "Surveyor Name": st.session_state.responses.get("surveyor_name")
                 }
+                
+                # Fill in responses using the translated labels as keys
                 for q_key in all_questions:
-                    current_response_data[labels.get(q_key, f"Question {q_key}")] = st.session_state.responses.get(q_key)
+                    question_label = labels.get(q_key, f"Question {q_key}")
+                    current_response_data[question_label] = st.session_state.responses.get(q_key)
+
                 if "others_gender" in st.session_state.responses:
                     current_response_data["Others Gender Specify"] = st.session_state.responses.get("others_gender")
                 
-                new_row_df = pd.DataFrame([current_response_data])
+                # 3. Create the new row as a DataFrame and align its columns
+                new_row_df = pd.DataFrame([current_response_data], columns=all_possible_columns)
                 
-                # Align columns and save
+                # 4. Append the new row and save
                 if st.session_state.all_survey_data.empty:
                     st.session_state.all_survey_data = new_row_df
                 else:
@@ -589,12 +594,51 @@ if st.session_state.admin_logged_in:
         search_term = st.text_input("Search responses", key="search_admin_view")
         if search_term:
             filtered_df = df[
-                df.apply(lambda row: row.astype(str).str.contains(search_term, case=False).any(), axis=1)
+                df.apply(lambda row: row.astype(str).str.contains(search_term, case=False, na=False).any(), axis=1)
             ]
             if not filtered_df.empty:
                 st.write("Filtered Results:")
                 st.dataframe(filtered_df)
             else:
                 st.info("No matching responses found.")
+        
+        st.markdown("---")
+        st.subheader("Download All Data")
+
+        # Download CSV
+        csv_data = st.session_state.all_survey_data.to_csv(index=False, encoding='utf-8')
+        st.download_button(
+            label="Download All Responses (CSV)",
+            data=csv_data,
+            file_name="all_survey_responses.csv",
+            mime="text/csv",
+            key="download_csv"
+        )
+        
+        # Download photos as a zip file
+        def create_zip_file(folder_path):
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                for root, _, files in os.walk(folder_path):
+                    for file in files:
+                        zip_file.write(
+                            os.path.join(root, file),
+                            os.path.relpath(os.path.join(root, file), folder_path)
+                        )
+            zip_buffer.seek(0)
+            return zip_buffer
+
+        if os.listdir(PHOTOS_DIR):
+            zip_buffer = create_zip_file(PHOTOS_DIR)
+            st.download_button(
+                label="Download All Photos (ZIP)",
+                data=zip_buffer,
+                file_name="all_photos.zip",
+                mime="application/zip",
+                key="download_photos_zip"
+            )
+        else:
+            st.info("No photos available for download.")
+
     else:
         st.info("No submissions found.")
