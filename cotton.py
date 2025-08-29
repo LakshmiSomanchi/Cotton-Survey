@@ -37,16 +37,17 @@ def initialize_session_state():
         if os.path.exists(SAVE_CSV_PATH):
             try:
                 st.session_state.all_survey_data = pd.read_csv(SAVE_CSV_PATH, encoding='utf-8')
-                st.info(f"Loaded {len(st.session_state.all_survey_data)} existing responses.")
+                # Use a less intrusive way to show this message if needed, e.g., a one-time info box.
+                # st.info(f"Loaded {len(st.session_state.all_survey_data)} existing responses.")
             except pd.errors.EmptyDataError:
                 st.session_state.all_survey_data = pd.DataFrame()
-                st.info("Existing CSV found but was empty. Initializing new DataFrame.")
+                # st.info("Existing CSV found but was empty. Initializing new DataFrame.")
             except Exception as e:
                 st.error(f"Error loading existing survey data: {e}. Starting with an empty DataFrame.")
                 st.session_state.all_survey_data = pd.DataFrame()
         else:
             st.session_state.all_survey_data = pd.DataFrame()
-            st.info("No existing survey data found. Starting a new DataFrame.")
+            # st.info("No existing survey data found. Starting a new DataFrame.")
 
 initialize_session_state()
 
@@ -351,7 +352,6 @@ FORM_FIELDS = {
 }
 
 # --- Main App Logic ---
-# Sidebar for language selection
 language = st.sidebar.selectbox(
     "Select Language / भाषा निवडा / ભાષા પસંદ કરો",
     ["English", "Hindi", "Marathi", "Gujarati"],
@@ -360,44 +360,77 @@ language = st.sidebar.selectbox(
 labels = dict_translations.get(language, dict_translations["English"])
 surveyor_name_label = labels.get("surveyor_name_key", "Surveyor Name")
 
+# Define keywords to identify cost/income fields.
+cost_income_keywords = {"cost", "income", "price", "(rs", "rs.)"}
+# Use the English dictionary to create a stable set of keys for these fields.
+cost_income_keys = {
+    key for key, label in dict_translations["English"].items()
+    if any(keyword in label.lower() for keyword in cost_income_keywords)
+}
+
 if not st.session_state.form_submitted_for_review:
     with st.form("questionnaire_form"):
-        # Surveyor Name input
         st.session_state.responses["surveyor_name"] = st.text_input(
             surveyor_name_label,
             key="surveyor_name_input",
             value=st.session_state.responses.get("surveyor_name", "")
         )
 
-        # Dynamically build the form based on FORM_FIELDS dictionary
         for q_key in all_questions:
             question_text = labels.get(q_key, f"Question {q_key} (No translation)")
             field_config = FORM_FIELDS.get(q_key, {"type": "text"})
-            current_value = st.session_state.responses.get(q_key, "")
+            current_value = st.session_state.responses.get(q_key)
 
             if field_config["type"] == "text":
                 st.session_state.responses[q_key] = st.text_input(
                     question_text,
                     key=f"question_{q_key}",
-                    value=current_value
+                    value=current_value or ""
                 )
+            
             elif field_config["type"] == "number":
-                num_val = float(current_value) if isinstance(current_value, (int, float)) or (isinstance(current_value, str) and current_value.replace('.',' ', 1).isdigit()) else 0.0
-                st.session_state.responses[q_key] = st.number_input(
-                    question_text,
-                    min_value= 0.0,
-                    format="%.2f",
-                    key=f"question_{q_key}",
-                    value=num_val
-                )
+                is_cost_field = q_key in cost_income_keys
+
+                if is_cost_field:
+                    # For cost/income fields, allow decimals.
+                    try:
+                        num_val = float(current_value) if current_value else 0.0
+                    except (ValueError, TypeError):
+                        num_val = 0.0
+                    
+                    st.session_state.responses[q_key] = st.number_input(
+                        question_text,
+                        min_value=0.0,
+                        format="%.2f",  # Format as a float
+                        key=f"question_{q_key}",
+                        value=num_val
+                    )
+                else:
+                    # For all other numeric fields, use integers.
+                    try:
+                        num_val = int(float(current_value)) if current_value else 0
+                    except (ValueError, TypeError):
+                        num_val = 0
+                    
+                    st.session_state.responses[q_key] = st.number_input(
+                        question_text,
+                        min_value=0,
+                        format="%d",      # Format as an integer
+                        step=1,          # Use a step of 1 for integers
+                        key=f"question_{q_key}",
+                        value=num_val
+                    )
+
             elif field_config["type"] == "yes_no":
-                default_index = 0 if current_value == "Yes" else (1 if current_value == "No" else 0)
+                options = ["Yes", "No"]
+                default_index = options.index(current_value) if current_value in options else 0
                 st.session_state.responses[q_key] = st.selectbox(
                     question_text,
-                    ["Yes", "No"],
+                    options,
                     key=f"question_{q_key}",
                     index=default_index
                 )
+
             elif field_config["type"] == "selectbox":
                 options = field_config["options"]
                 default_index = options.index(current_value) if current_value in options else 0
@@ -419,11 +452,15 @@ if not st.session_state.form_submitted_for_review:
 
             elif field_config["type"] == "multiselect":
                 options = field_config["options"]
-                selected_values = current_value.split(', ') if isinstance(current_value, str) and current_value else []
+                current_value = st.session_state.responses.get(q_key, [])
+                # Ensure current_value is a list for multiselect
+                if isinstance(current_value, str):
+                    current_value = [item.strip() for item in current_value.split(',') if item.strip()]
+
                 selected_options = st.multiselect(
                     question_text,
                     options,
-                    default=selected_values,
+                    default=current_value,
                     key=f"question_{q_key}"
                 )
                 st.session_state.responses[q_key] = ", ".join(selected_options) if selected_options else ""
@@ -433,10 +470,9 @@ if not st.session_state.form_submitted_for_review:
                     question_text,
                     placeholder=field_config["placeholder"],
                     key=f"question_{q_key}",
-                    value=current_value
+                    value=current_value or ""
                 )
 
-        # Photo uploader
         uploaded_photo = st.file_uploader(
             "Upload a photo (optional):",
             type=["jpg", "jpeg", "png"],
@@ -454,24 +490,20 @@ if not st.session_state.form_submitted_for_review:
                 st.session_state.uploaded_photo_info = None
                 st.rerun()
 
-        # Submit button
         if st.form_submit_button("Review and Proceed"):
             st.session_state.has_validation_error = False
-            # Validation logic
             required_fields = [k for k, v in FORM_FIELDS.items() if v.get("required")]
             for field in required_fields:
                 val = st.session_state.responses.get(field)
-                if not val or (isinstance(val, (int, float)) and val <= 0 and field in ["34", "37", "39", "41", "42"]):
+                if not val: # General check for emptiness
                     st.error(f"Field '{labels[field]}' is required.")
                     st.session_state.has_validation_error = True
             
-            # Specific validation for mobile number
             phone_number = str(st.session_state.responses.get("3", "")).strip()
             if not phone_number.isdigit() or len(phone_number) != 10:
                 st.error("Mobile no. must be exactly 10 digits.")
                 st.session_state.has_validation_error = True
 
-            # Specific validation for harvesting time
             harvesting_time = st.session_state.responses.get("62")
             if harvesting_time and len([m.strip() for m in harvesting_time.split(",") if m.strip()]) != 3:
                 st.error(f"Field '{labels['62']}' must contain exactly 3 months, separated by commas.")
@@ -485,8 +517,6 @@ if not st.session_state.form_submitted_for_review:
 if st.session_state.form_submitted_for_review and not st.session_state.has_validation_error:
     st.subheader("Review Your Responses")
     st.write("Please review the information below. If everything is correct, click 'Confirm and Save'.")
-
-    # Display responses for review
     st.write(f"**{surveyor_name_label}:** {st.session_state.responses.get('surveyor_name')}")
     for key, value in st.session_state.responses.items():
         if key in all_questions:
@@ -505,142 +535,34 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
     with col2:
         if st.button("Confirm and Save"):
             try:
-                # 1. Define all possible columns for consistent DataFrame structure
+                # Use English labels for consistent column headers
+                eng_labels = dict_translations["English"]
                 all_possible_columns = (
                     ["Timestamp", "Surveyor Name"]
-                    + [labels.get(q_key, f"Question {q_key}") for q_key in all_questions]
+                    + [eng_labels.get(q_key, f"Question {q_key}") for q_key in all_questions]
                     + ["Others Gender Specify"]
                 )
-
-                # 2. Prepare data for the new DataFrame row
+                
                 timestamp = datetime.datetime.now().strftime("%Y%m%d_%H%M%S")
                 current_response_data = {
                     "Timestamp": timestamp,
                     "Surveyor Name": st.session_state.responses.get("surveyor_name")
                 }
                 
-                # Fill in responses using the translated labels as keys
                 for q_key in all_questions:
-                    question_label = labels.get(q_key, f"Question {q_key}")
+                    question_label = eng_labels.get(q_key, f"Question {q_key}")
                     current_response_data[question_label] = st.session_state.responses.get(q_key)
-
+                
                 if "others_gender" in st.session_state.responses:
                     current_response_data["Others Gender Specify"] = st.session_state.responses.get("others_gender")
-                
-                # 3. Create the new row as a DataFrame and align its columns
-                new_row_df = pd.DataFrame([current_response_data], columns=all_possible_columns)
-                
-                # 4. Append the new row and save
+
+                # Ensure all columns are present to prevent concat issues
+                new_row_data = {col: current_response_data.get(col) for col in all_possible_columns}
+                new_row_df = pd.DataFrame([new_row_data])
+
                 if st.session_state.all_survey_data.empty:
                     st.session_state.all_survey_data = new_row_df
                 else:
-                    st.session_state.all_survey_data = pd.concat([st.session_state.all_survey_data, new_row_df], ignore_index=True)
-                
-                st.session_state.all_survey_data.to_csv(SAVE_CSV_PATH, index=False, encoding='utf-8')
-                
-                # Save photo logic
-                if st.session_state.uploaded_photo_info:
-                    farmer_name_for_filename = "".join(filter(str.isalnum, st.session_state.responses.get("2", "unknown_farmer"))).lower()
-                    photo_name = f"photo_{farmer_name_for_filename}_{timestamp}.jpg"
-                    photo_path = os.path.join(PHOTOS_DIR, photo_name)
-                    with open(photo_path, "wb") as f:
-                        f.write(st.session_state.uploaded_photo_info["data"])
-                    st.success(f"Survey data recorded and photo saved as {photo_name}!")
-                else:
-                    st.success("Survey data recorded successfully!")
-                
-                # Clear and reset state for a new survey
-                st.session_state.responses = {}
-                st.session_state.uploaded_photo_info = None
-                st.session_state.form_submitted_for_review = False
-                st.rerun()
-
-            except Exception as e:
-                st.error(f"An error occurred while saving: {e}")
-
-# --- Admin Section ---
-st.markdown("---")
-st.subheader("Admin Login (for Data Access)")
-if not st.session_state.admin_logged_in:
-    with st.form("admin_login_form"):
-        admin_email = st.text_input("Admin Email").lower()
-        login_button = st.form_submit_button("Login")
-        if login_button:
-            if admin_email in ADMIN_USERS:
-                st.session_state.admin_logged_in = True
-                st.session_state.last_admin_email = admin_email
-                st.success("Admin login successful!")
-                st.rerun()
-            else:
-                st.error("Invalid email. Please use an authorized admin email.")
-else:
-    st.success(f"You are logged in as Admin ({st.session_state.get('last_admin_email', 'unknown')}).")
-    if st.button("Logout"):
-        st.session_state.admin_logged_in = False
-        st.session_state.pop('last_admin_email', None)
-        st.rerun()
-
-# Display responses for admin
-if st.session_state.admin_logged_in:
-    st.markdown("---")
-    st.subheader("View Submitted Responses")
-    if not st.session_state.all_survey_data.empty:
-        df = st.session_state.all_survey_data.copy()
-        df["Timestamp"] = pd.to_datetime(df["Timestamp"], errors='coerce')
-        st.write("Showing all survey responses:")
-        st.dataframe(df)
-
-        # Search functionality
-        search_term = st.text_input("Search responses", key="search_admin_view")
-        if search_term:
-            filtered_df = df[
-                df.apply(lambda row: row.astype(str).str.contains(search_term, case=False, na=False).any(), axis=1)
-            ]
-            if not filtered_df.empty:
-                st.write("Filtered Results:")
-                st.dataframe(filtered_df)
-            else:
-                st.info("No matching responses found.")
-        
-        st.markdown("---")
-        st.subheader("Download All Data")
-
-        # Download CSV
-        csv_data = st.session_state.all_survey_data.to_csv(index=False, encoding='utf-8')
-        st.download_button(
-            label="Download All Responses (CSV)",
-            data=csv_data,
-            file_name="all_survey_responses.csv",
-            mime="text/csv",
-            key="download_csv"
-        )
-        
-        # Download photos as a zip file
-        def create_zip_file(folder_path):
-            zip_buffer = io.BytesIO()
-            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
-                for root, _, files in os.walk(folder_path):
-                    for file in files:
-                        zip_file.write(
-                            os.path.join(root, file),
-                            os.path.relpath(os.path.join(root, file), folder_path)
-                        )
-            zip_buffer.seek(0)
-            return zip_buffer
-
-        if os.listdir(PHOTOS_DIR):
-            zip_buffer = create_zip_file(PHOTOS_DIR)
-            st.download_button(
-                label="Download All Photos (ZIP)",
-                data=zip_buffer,
-                file_name="all_photos.zip",
-                mime="application/zip",
-                key="download_photos_zip"
-            )
-        else:
-            st.info("No photos available for download.")
-
-    else:
-        st.info("No submissions found.")
-
-
+                    # Align columns before concatenating
+                    st.session_state.all_survey_data, new_row_df = st.session_state.all_survey_data.align(new_row_df, join='outer', axis=1)
+                    st.session_s
