@@ -385,7 +385,7 @@ if not st.session_state.form_submitted_for_review:
                 num_val = float(current_value) if isinstance(current_value, (int, float)) or (isinstance(current_value, str) and current_value.replace('.', '', 1).isdigit()) else 0.0
                 st.session_state.responses[q_key] = st.number_input(
                     question_text,
-                    min_value=0.0,
+                    min_value=0,
                     format="%.2f",
                     key=f"question_{q_key}",
                     value=num_val
@@ -642,3 +642,4 @@ if st.session_state.admin_logged_in:
 
     else:
         st.info("No submissions found.")
+
