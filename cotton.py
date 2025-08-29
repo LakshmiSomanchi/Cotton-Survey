@@ -565,4 +565,103 @@ if st.session_state.form_submitted_for_review and not st.session_state.has_valid
                 else:
                     # Align columns before concatenating
                     st.session_state.all_survey_data, new_row_df = st.session_state.all_survey_data.align(new_row_df, join='outer', axis=1)
-                    st.session_s
+                    st.session_state.all_survey_data = pd.concat([st.session_state.all_survey_data, new_row_df], ignore_index=True)
+                
+                st.session_state.all_survey_data.to_csv(SAVE_CSV_PATH, index=False, encoding='utf-8')
+                
+                if st.session_state.uploaded_photo_info:
+                    farmer_name_for_filename = "".join(filter(str.isalnum, st.session_state.responses.get("2", "unknown_farmer"))).lower()
+                    photo_name = f"photo_{farmer_name_for_filename}_{timestamp}.jpg"
+                    photo_path = os.path.join(PHOTOS_DIR, photo_name)
+                    with open(photo_path, "wb") as f:
+                        f.write(st.session_state.uploaded_photo_info["data"])
+                    st.success(f"Survey data recorded and photo saved as {photo_name}!")
+                else:
+                    st.success("Survey data recorded successfully!")
+                
+                st.session_state.responses = {}
+                st.session_state.uploaded_photo_info = None
+                st.session_state.form_submitted_for_review = False
+                st.rerun()
+            except Exception as e:
+                st.error(f"An error occurred while saving: {e}")
+
+# --- Admin Section ---
+st.markdown("---")
+st.subheader("Admin Login (for Data Access)")
+if not st.session_state.admin_logged_in:
+    with st.form("admin_login_form"):
+        admin_email = st.text_input("Admin Email").lower()
+        login_button = st.form_submit_button("Login")
+        if login_button:
+            if admin_email in ADMIN_USERS:
+                st.session_state.admin_logged_in = True
+                st.session_state.last_admin_email = admin_email
+                st.success("Admin login successful!")
+                st.rerun()
+            else:
+                st.error("Invalid email. Please use an authorized admin email.")
+else:
+    st.success(f"You are logged in as Admin ({st.session_state.get('last_admin_email', 'unknown')}).")
+    if st.button("Logout"):
+        st.session_state.admin_logged_in = False
+        st.session_state.pop('last_admin_email', None)
+        st.rerun()
+
+if st.session_state.admin_logged_in:
+    st.markdown("---")
+    st.subheader("View Submitted Responses")
+    if not st.session_state.all_survey_data.empty:
+        df = st.session_state.all_survey_data.copy()
+        df["Timestamp"] = pd.to_datetime(df["Timestamp"], format="%Y%m%d_%H%M%S", errors='coerce')
+        st.write("Showing all survey responses:")
+        st.dataframe(df)
+
+        search_term = st.text_input("Search responses", key="search_admin_view")
+        if search_term:
+            filtered_df = df[
+                df.apply(lambda row: row.astype(str).str.contains(search_term, case=False, na=False).any(), axis=1)
+            ]
+            if not filtered_df.empty:
+                st.write("Filtered Results:")
+                st.dataframe(filtered_df)
+            else:
+                st.info("No matching responses found.")
+        
+        st.markdown("---")
+        st.subheader("Download All Data")
+        
+        csv_data = st.session_state.all_survey_data.to_csv(index=False, encoding='utf-8')
+        st.download_button(
+            label="Download All Responses (CSV)",
+            data=csv_data,
+            file_name="all_survey_responses.csv",
+            mime="text/csv",
+            key="download_csv"
+        )
+        
+        def create_zip_file(folder_path):
+            zip_buffer = io.BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zip_file:
+                for root, _, files in os.walk(folder_path):
+                    for file in files:
+                        zip_file.write(
+                            os.path.join(root, file),
+                            os.path.relpath(os.path.join(root, file), folder_path)
+                        )
+            zip_buffer.seek(0)
+            return zip_buffer
+
+        if os.path.isdir(PHOTOS_DIR) and os.listdir(PHOTOS_DIR):
+            zip_buffer = create_zip_file(PHOTOS_DIR)
+            st.download_button(
+                label="Download All Photos (ZIP)",
+                data=zip_buffer,
+                file_name="all_photos.zip",
+                mime="application/zip",
+                key="download_photos_zip"
+            )
+        else:
+            st.info("No photos available for download.")
+    else:
+        st.info("No submissions found.")
